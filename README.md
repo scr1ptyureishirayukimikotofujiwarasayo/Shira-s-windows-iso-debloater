@@ -197,6 +197,7 @@ Errors are categorized by source (DISM, AppX, Mount, Export, Health, etc.) for e
 
 - Original script by [itsNileshHere](https://github.com/itsNileshHere/Windows-ISO-Debloater)
 - Enhanced by shirayukimikoto
+- Inspired by KernelOS and Windows X-Lite stripped builds
 - [tiny11builder](https://github.com/ntdevlabs/tiny11builder) for inspiration
 - [Winaero](https://winaero.com/) for registry optimization techniques
 - [RemoveWindowsAI](https://github.com/zoicware/RemoveWindowsAI) for AI removal approach
