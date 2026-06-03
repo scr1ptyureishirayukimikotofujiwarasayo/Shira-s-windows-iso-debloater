@@ -8,7 +8,7 @@ An advanced PowerShell script that strips Windows ISOs to a level comparable to 
 
 | ISO Edition | Debloat Safety | Recommendation |
 |------------|---------------|---------------|
-| **Windows LTSC (IoT/Enterprise LTSC)** | Safest | Ideal for heavy debloating. Minimal pre-installed bloat, no Store dependency. Works best with all options enabled. |
+| **Windows LTSC (IoT/Enterprise LTSC)** | Minimal impact | LTSC is already heavily debloated by Microsoft. Most removal options target components that don't exist in LTSC. See the LTSC section below for specific guidance. |
 | **Windows Enterprise** | Safe | Good for moderate debloating. Fewer consumer integrations than Pro. |
 | **Windows Pro / Pro for Workstations** | Moderate | Use conservative options. Skip `DefenderRemove`, `WinSxSCleanup`, and `TaskCleanup`. |
 | **Windows Home** | Risky | Home edition has tight consumer integrations. Only use `AppxRemove` and basic tweaks. Skip everything else. |
@@ -27,10 +27,36 @@ Features: AppX removal, service disabling, telemetry blocking, privacy tweaks, r
 
 ## Recommended Settings by ISO Type
 
-### LTSC / Enterprise (safe to go all-in)
+### LTSC (IoT/Enterprise LTSC)
+
+**Important:** LTSC ISOs are already debloated by Microsoft — they ship without Store apps, Widgets, Copilot, AI components, Xbox, Bing, and most consumer features. Running aggressive removal options on LTSC will produce errors (e.g. "package not found", "feature not present"). This is **normal and expected** — the script is trying to remove components that don't exist in LTSC.
+
+**Errors on LTSC do NOT mean something is wrong with your ISO or the script.** They are harmless "not found" skips because LTSC never had those components.
+
+#### Recommended for LTSC — skip these options entirely:
 ```
-All defaults: yes to everything
-Optional: -DefenderRemove yes -WinUpdateDisable yes -TaskCleanup yes
+-AppxRemove no              # LTSC has almost no AppX bloat
+-CapabilitiesRemove no      # LTSC already lacks most consumer features
+-OnedriveRemove no          # OneDrive is not pre-installed on LTSC
+-EDGERemove no              # Edge is optional / not always present
+-AIRemove no                # Copilot, Recall, AI components don't exist on LTSC
+-WidgetsRemove no           # Widgets are not included in LTSC
+-DefenderRemove no          # Skip — Defender is one of the few things actually present
+-TaskCleanup no             # Minimal telemetry tasks already
+-WinSxSCleanup no           # LTSC is already lean
+-ExtremeDebloat no          # Services it targets are often absent or already disabled
+```
+
+#### Options still useful on LTSC:
+```
+-TPMBypass          yes     # Bypass hardware checks if needed
+-UserFoldersEnable  yes     # Restore folder shortcuts on Windows 11
+-DriverIntegrate    yes     # Integrate Intel VMD drivers if needed
+-ESDConvert         yes     # Compress the ISO
+-useOscdimg         yes     # Reliable ISO creation
+-PerformanceTweaks  yes     # CPU/memory/network optimizations (always applicable)
+-ServicesDisable    yes     # Some services may be present; errors are normal
+-WinUpdateDisable   no      # Optional — LTSC only gets security updates; disabling may leave you vulnerable
 ```
 
 ### Pro (play it safe) — same as BakuretsuClean's non-aggressive approach
@@ -58,6 +84,33 @@ Then: run BakuretsuClean after installation
 
 ---
 
+## Debloating LTSC ISOs — What to Expect
+
+LTSC (Long-Term Servicing Channel) editions are Microsoft's own debloated Windows builds. They ship without:
+- Microsoft Store (and most Store-dependent apps)
+- Xbox, Gaming, Mixed Reality, and consumer entertainment apps
+- Copilot, Recall, and AI/cloud assistant components
+- Widgets, News, WebExperience, and consumer information feeds
+- Bing, Weather, Maps, and other search-dependent apps
+- Teams, Skype, and consumer communication integrations
+- Most telemetry and data collection tasks present in Home/Pro
+
+### Why You'll See Errors
+
+When you run the debloater on an LTSC ISO, many removal steps will report **"not found"** or **"failed"** because the script attempts to remove components that LTSC never included in the first place. These errors are:
+
+- **Harmless** — the script continues past them
+- **Normal** — expected behavior on already-lean ISOs
+- **Logged** — check `ErrorLogs\` for details if you want to confirm
+
+The final ISO will still be built successfully with whatever removals were possible.
+
+### Best Practice for LTSC
+
+Use the `-SafeMode` flag to only attempt benign removals, or run the script interactively and answer **"no"** to AppX removal, features removal, Edge, AI, Widgets, OneDrive, Defender, tasks, and WinSxS cleanup. Enable only the options that apply universally (TPM bypass, folder shortcuts, driver integration, compression, performance tweaks).
+
+---
+
 ## Quick Start
 
 1. **Run PowerShell as Administrator**
@@ -67,171 +120,6 @@ Then: run BakuretsuClean after installation
 5. Wait for the debloated ISO to be created
 
 **Minimum requirements:** Windows 10/11 host, 20GB free disk space, Administrator privileges.
-
-⚠️ LTSC Removal Errors Explained (Normal & Expected)
-
-When debloating Windows LTSC, you may see several [error] messages during:
-
-    Feature removal
-
-    AppX/package removal
-
-    Service/task cleanup
-
-These are not real errors. LTSC is designed for long‑term, stable service environments and ships with far fewer consumer components than Pro or Home. Because of this, many of the features your script attempts to remove simply do not exist in LTSC.
-
-DISM reports missing components as:
-
-    “Error: source files not found”
-
-Your script logs this as [error], but it is harmless and expected.
-Why this happens
-
-    LTSC has no Widgets, no WebExperience, no Xbox, no Cortana, no Mixed Reality, no Store, and very few optional features.
-
-    When the script attempts to remove these components, DISM returns an error because the feature is already absent.
-
-    This actually confirms that LTSC is the safest and fastest edition to debloat.
-
-Summary
-
-    [error] on LTSC = component not present
-
-    Not a failure
-
-    Not corruption
-
-    Not a problem
-
-    LTSC is already minimal, so most removals are skipped automatically
-    ⭐ Safe-to-Skip Components on LTSC (Important for Debloating)
-
-When debloating Windows LTSC, many removal steps will show:
-
-    “0 features found”
-
-    “0 packages found”
-
-    “[error] source files not found”
-
-This is normal. LTSC is designed for long‑term service environments and ships with far fewer components than Pro/Home.
-Because of this, several removal categories can be safely skipped — the components simply do not exist.
-✔ Widgets / WebExperience
-
-Safe to skip  
-LTSC does not include:
-
-    Widgets
-
-    Feeds
-
-    WebExperiencePack
-
-    MSN integration
-
-    WebView2‑based shell pages
-
-Your debloater will always skip these automatically.
-✔ AppX / Consumer Packages
-
-Safe to skip  
-LTSC contains almost no AppX packages except:
-
-    Calculator
-
-    Photos (sometimes)
-
-    ShellExperienceHost
-
-    Settings
-
-Everything else (81+ packages) is already missing.
-✔ Optional Features
-
-Safe to skip  
-LTSC does not include:
-
-    Mixed Reality
-
-    XPS Viewer
-
-    WordPad
-
-    Internet Explorer
-
-    Media Player
-
-    Quick Assist
-
-    Hello Face
-
-    OCR/Handwriting
-
-    Speech recognition
-
-Your script will show “not found” for most of these.
-✔ Hyper‑V Components
-
-Safe to skip  
-LTSC only includes the core virtualization layer, not the full Hyper‑V feature set.
-There is nothing extra to remove, and removing the core layer is not recommended.
-✔ Xbox / Gaming Services
-
-Safe to skip  
-LTSC has:
-
-    no Xbox services
-
-    no GameDVR
-
-    no gaming overlays
-
-    no gaming telemetry
-
-These steps will always skip.
-✔ AI / Copilot / WebView2
-
-Safe to skip  
-LTSC does not include:
-
-    Copilot
-
-    AI components
-
-    WebView2 shell integrations
-
-These steps will always skip.
-⭐ What LTSC does remove
-
-The only consumer component LTSC still includes is:
-
-    OneDrive
-
-Your debloater will remove:
-
-    OneDriveSetup.exe
-
-    OneDrive tasks
-
-    OneDrive registry hooks
-
-    leftover folders
-
-Everything else is already gone.
-⭐ Summary
-
-    LTSC is already minimal
-
-    Most removal steps will skip automatically
-
-    “[error] not found” = normal and harmless
-
-    Only OneDrive is actually removed
-
-    Cleanup + registry tweaks still apply
-
-    LTSC is the safest edition for deep debloating
-
 
 ---
 
@@ -355,6 +243,9 @@ Errors are categorized by source (DISM, AppX, Mount, Export, Health, etc.) for e
 
 # Safe mode - remove only apps, keep everything else
 .\isoDebloaterScript.ps1 -AppxRemove yes -CapabilitiesRemove no -OnedriveRemove no -EDGERemove no -AIRemove no -DefenderRemove no
+
+# LTSC ISO - skip removals, apply only universal optimizations
+.\isoDebloaterScript.ps1 -AppxRemove no -CapabilitiesRemove no -OnedriveRemove no -EDGERemove no -AIRemove no -WidgetsRemove no -DefenderRemove no -ServicesDisable yes -PerformanceTweaks yes -TPMBypass yes -ESDConvert yes
 ```
 
 ### All Parameters
@@ -396,7 +287,7 @@ Errors are categorized by source (DISM, AppX, Mount, Export, Health, etc.) for e
 
 ## Tips
 
-- **Use LTSC or Enterprise ISOs** for the best results with aggressive debloating. Home/Pro editions have deeply integrated consumer features that can break when removed offline.
+- **LTSC ISOs are already debloated** — errors during debloating are normal and harmless. Skip most removal options (AppX, features, Edge, AI, Widgets, OneDrive, tasks, WinSxS) and only enable TPM bypass, driver integration, folder shortcuts, compression, and performance tweaks.
 - **For Home/Pro systems**, install the stock ISO and use **BakuretsuClean** (included) to debloat the live OS instead.
 - **Use a fast SSD** for the working directory — DISM operations are disk-intensive.
 - **Disable real-time AV** temporarily — some AV products interfere with DISM mounting operations.
