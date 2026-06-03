@@ -68,6 +68,42 @@ Then: run BakuretsuClean after installation
 
 **Minimum requirements:** Windows 10/11 host, 20GB free disk space, Administrator privileges.
 
+⚠️ LTSC Removal Errors Explained (Normal & Expected)
+
+When debloating Windows LTSC, you may see several [error] messages during:
+
+    Feature removal
+
+    AppX/package removal
+
+    Service/task cleanup
+
+These are not real errors. LTSC is designed for long‑term, stable service environments and ships with far fewer consumer components than Pro or Home. Because of this, many of the features your script attempts to remove simply do not exist in LTSC.
+
+DISM reports missing components as:
+
+    “Error: source files not found”
+
+Your script logs this as [error], but it is harmless and expected.
+Why this happens
+
+    LTSC has no Widgets, no WebExperience, no Xbox, no Cortana, no Mixed Reality, no Store, and very few optional features.
+
+    When the script attempts to remove these components, DISM returns an error because the feature is already absent.
+
+    This actually confirms that LTSC is the safest and fastest edition to debloat.
+
+Summary
+
+    [error] on LTSC = component not present
+
+    Not a failure
+
+    Not corruption
+
+    Not a problem
+
+    LTSC is already minimal, so most removals are skipped automatically
 ---
 
 ## What Happens During Execution
