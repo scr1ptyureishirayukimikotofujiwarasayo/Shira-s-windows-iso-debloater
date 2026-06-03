@@ -33,7 +33,13 @@ All defaults: yes to everything
 Optional: -DefenderRemove yes -WinUpdateDisable yes -TaskCleanup yes
 ```
 
-### Pro (play it safe)
+### Pro (play it safe) — same as BakuretsuClean's non-aggressive approach
+```
+-SafeMode
+```
+This removes AppX bloat only. Keeps Store, Calculator, Photos, Edge, Cortana, and system services intact. Safe for any edition.
+
+Or manually:
 ```
 -AppxRemove yes -CapabilitiesRemove yes -OnedriveRemove yes -EDGERemove yes
 -AIRemove yes -ServicesDisable yes -PerformanceTweaks yes
