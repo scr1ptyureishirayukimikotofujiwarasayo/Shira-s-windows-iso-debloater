@@ -104,6 +104,135 @@ Summary
     Not a problem
 
     LTSC is already minimal, so most removals are skipped automatically
+    ⭐ Safe-to-Skip Components on LTSC (Important for Debloating)
+
+When debloating Windows LTSC, many removal steps will show:
+
+    “0 features found”
+
+    “0 packages found”
+
+    “[error] source files not found”
+
+This is normal. LTSC is designed for long‑term service environments and ships with far fewer components than Pro/Home.
+Because of this, several removal categories can be safely skipped — the components simply do not exist.
+✔ Widgets / WebExperience
+
+Safe to skip  
+LTSC does not include:
+
+    Widgets
+
+    Feeds
+
+    WebExperiencePack
+
+    MSN integration
+
+    WebView2‑based shell pages
+
+Your debloater will always skip these automatically.
+✔ AppX / Consumer Packages
+
+Safe to skip  
+LTSC contains almost no AppX packages except:
+
+    Calculator
+
+    Photos (sometimes)
+
+    ShellExperienceHost
+
+    Settings
+
+Everything else (81+ packages) is already missing.
+✔ Optional Features
+
+Safe to skip  
+LTSC does not include:
+
+    Mixed Reality
+
+    XPS Viewer
+
+    WordPad
+
+    Internet Explorer
+
+    Media Player
+
+    Quick Assist
+
+    Hello Face
+
+    OCR/Handwriting
+
+    Speech recognition
+
+Your script will show “not found” for most of these.
+✔ Hyper‑V Components
+
+Safe to skip  
+LTSC only includes the core virtualization layer, not the full Hyper‑V feature set.
+There is nothing extra to remove, and removing the core layer is not recommended.
+✔ Xbox / Gaming Services
+
+Safe to skip  
+LTSC has:
+
+    no Xbox services
+
+    no GameDVR
+
+    no gaming overlays
+
+    no gaming telemetry
+
+These steps will always skip.
+✔ AI / Copilot / WebView2
+
+Safe to skip  
+LTSC does not include:
+
+    Copilot
+
+    AI components
+
+    WebView2 shell integrations
+
+These steps will always skip.
+⭐ What LTSC does remove
+
+The only consumer component LTSC still includes is:
+
+    OneDrive
+
+Your debloater will remove:
+
+    OneDriveSetup.exe
+
+    OneDrive tasks
+
+    OneDrive registry hooks
+
+    leftover folders
+
+Everything else is already gone.
+⭐ Summary
+
+    LTSC is already minimal
+
+    Most removal steps will skip automatically
+
+    “[error] not found” = normal and harmless
+
+    Only OneDrive is actually removed
+
+    Cleanup + registry tweaks still apply
+
+    LTSC is the safest edition for deep debloating
+
+
 ---
 
 ## What Happens During Execution
