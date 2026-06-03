@@ -4,6 +4,54 @@ An advanced PowerShell script that strips Windows ISOs to a level comparable to 
 
 ---
 
+## Which ISO Should You Use?
+
+| ISO Edition | Debloat Safety | Recommendation |
+|------------|---------------|---------------|
+| **Windows LTSC (IoT/Enterprise LTSC)** | Safest | Ideal for heavy debloating. Minimal pre-installed bloat, no Store dependency. Works best with all options enabled. |
+| **Windows Enterprise** | Safe | Good for moderate debloating. Fewer consumer integrations than Pro. |
+| **Windows Pro / Pro for Workstations** | Moderate | Use conservative options. Skip `DefenderRemove`, `WinSxSCleanup`, and `TaskCleanup`. |
+| **Windows Home** | Risky | Home edition has tight consumer integrations. Only use `AppxRemove` and basic tweaks. Skip everything else. |
+
+### For Home/Pro ISOs — Debloat Live Instead
+
+If you want an aggressive debloat on a Home or Pro system, **install the stock ISO first**, then use **BakuretsuClean** to debloat the running OS. This avoids corrupting the installer and gives you a stable installation with the same result.
+
+```
+BakuretsuClean — live-OS debloater (included in the repo)
+Run: BakuretsuClean\RunDebloater.bat as Administrator
+Features: AppX removal, service disabling, telemetry blocking, privacy tweaks, revert support
+```
+
+---
+
+## Recommended Settings by ISO Type
+
+### LTSC / Enterprise (safe to go all-in)
+```
+All defaults: yes to everything
+Optional: -DefenderRemove yes -WinUpdateDisable yes -TaskCleanup yes
+```
+
+### Pro (play it safe)
+```
+-AppxRemove yes -CapabilitiesRemove yes -OnedriveRemove yes -EDGERemove yes
+-AIRemove yes -ServicesDisable yes -PerformanceTweaks yes
+-DefenderRemove no -WidgetsRemove no -WinUpdateDisable no
+-ExtremeDebloat no -TaskCleanup no -WinSxSCleanup no
+```
+
+### Home (bare minimum)
+```
+-AppxRemove yes
+-CapabilitiesRemove no -OnedriveRemove no -EDGERemove no
+-AIRemove no -DefenderRemove no -ServicesDisable no
+-TaskCleanup no -WinSxSCleanup no
+Then: run BakuretsuClean after installation
+```
+
+---
+
 ## Quick Start
 
 1. **Run PowerShell as Administrator**
@@ -177,6 +225,8 @@ Errors are categorized by source (DISM, AppX, Mount, Export, Health, etc.) for e
 
 ## Tips
 
+- **Use LTSC or Enterprise ISOs** for the best results with aggressive debloating. Home/Pro editions have deeply integrated consumer features that can break when removed offline.
+- **For Home/Pro systems**, install the stock ISO and use **BakuretsuClean** (included) to debloat the live OS instead.
 - **Use a fast SSD** for the working directory — DISM operations are disk-intensive.
 - **Disable real-time AV** temporarily — some AV products interfere with DISM mounting operations.
 - **Don't use Defender removal** unless you're comfortable with potential security implications and accept it's experimental.
