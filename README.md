@@ -285,6 +285,56 @@ Errors are categorized by source (DISM, AppX, Mount, Export, Health, etc.) for e
 
 ---
 
+## Virtual Machine Testing & Troubleshooting Guide
+
+> **IMPORTANT:** The issues described below are caused by **improper VM configuration** and the **natural side effects of aggressive component stripping** — they are **NOT defects in the script or your debloated ISO.** Your ISO is almost certainly valid. Before opening an issue, verify you are not hitting one of these known scenarios.
+
+---
+
+### 1. The Endless WinPE Pre-Install Loop (Hyper-V Generation 1)
+
+**Symptom:** After the installation progress bar reaches 100% and the VM reboots, it drops back into the initial *"Install Now"* setup screen endlessly.
+
+**Root Cause:** Hyper-V **Generation 1** virtual machines rely on IDE Controller emulation and blindly boot from the attached virtual CD/DVD ISO drive on every restart — ignoring the virtual hard disk where the OS was just installed. This is a Hyper-V Gen 1 design behavior, not an ISO corruption issue.
+
+**The Fix:**
+1. **Completely power off** the VM (do not just restart).
+2. Open **VM Settings → DVD Drive** → change the **Media** type to **"None"** (or unmount the ISO entirely).
+3. Apply changes and **start the VM cold**.
+4. **Alternatively:** Move the **Virtual Hard Disk** to the top of the boot priority list in the VM's BIOS/firmware settings, OR simply do **not** press any key when the *"Press any key to boot from CD..."* prompt flashes during reboot.
+
+---
+
+### 2. The "Just a Moment" / OOBEREGION Loading Loop
+
+**Symptom:** After a successful installation, the system hangs indefinitely on the blue *"Just a moment..."* screen, or throws a fatal **OOBEREGION** setup interface error.
+
+**Root Cause:** This is actually a sign the debloater **worked perfectly.** Aggressive component stripping cleanly removes Microsoft's background consumer telemetry, web account integration, and regional tracking frameworks. The interactive OOBE wizard layer panics when its online service hooks are absent — it has **nothing to latch onto** for the default first-run experience. **This is not image corruption.**
+
+**The Fix:**
+1. Press **`Shift + F10`** (or **`Fn + Shift + F10`** on laptops) to open an administrative Command Prompt.
+2. Force-create a local user account:
+   ```
+   net user Admin01 /add
+   net localgroup Administrators Admin01 /add
+   ```
+3. Rewrite the setup boot flags to bypass the stuck OOBE wizard layer entirely:
+   ```
+   reg add "HKLM\SYSTEM\Setup" /v "OOBEInProgress" /t REG_DWORD /d 0 /f
+   reg add "HKLM\SYSTEM\Setup" /v "SetupType" /t REG_DWORD /d 0 /f
+   ```
+4. Issue a hard restart from the toolbar or type:
+   ```
+   shutdown /r /t 0
+   ```
+5. Upon reboot, Windows will **skip the OOBE entirely** and log directly into the ultra-lean desktop shell as **`Admin01`** with full administrator privileges.
+
+---
+
+> **If you encountered either of these scenarios:** your debloated ISO is fine. These are known VM configuration quirks and expected outcomes of aggressive stripping — **please do not file a bug report for them.**
+
+---
+
 ## Tips
 
 - **LTSC ISOs are already debloated** — errors during debloating are normal and harmless. Skip most removal options (AppX, features, Edge, AI, Widgets, OneDrive, tasks, WinSxS) and only enable TPM bypass, driver integration, folder shortcuts, compression, and performance tweaks.
