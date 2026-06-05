@@ -326,17 +326,35 @@ Errors are categorized by source (DISM, AppX, Mount, Export, Health, etc.) for e
 
 ## Which ISO Should You Use?
 
-| ISO Edition | Debloat Safety | Recommendation |
-|------------|---------------|---------------|
-| **Windows LTSC (IoT/Enterprise LTSC)** | Minimal impact | LTSC is already heavily debloated by Microsoft. Most removal options target components that don't exist in LTSC. Errors are normal and harmless. See the LTSC section below. |
-| **Windows Enterprise** | Safe | Good for moderate debloating. Fewer consumer integrations than Pro. |
-| **Windows Pro / Pro for Workstations** | Moderate | Use Standard tier. Skip `DefenderRemove`, `WinSxSCleanup`, and `TaskCleanup` unless you know what you're doing. |
-| **Windows Home** | Risky | Home edition has tight consumer integrations. Only use `-SafeMode` or bare minimum options. |
+**Any Windows edition can be debloated safely.** Earlier assumptions that Home/Pro editions were "risky" were based on misdiagnosed VM issues — the actual root cause of installation loops was **incorrect Hyper-V settings and poor OOBE management** (see [VM Troubleshooting](#virtual-machine-troubleshooting) above), not ISO corruption or edition incompatibility.
 
-### For Home/Pro ISOs — Debloat Live Instead
+| ISO Edition | Debloat Impact | Notes |
+|------------|---------------|-------|
+| **Windows 11/10 Home** | Full | Works with all tiers. Use `-OOBEBypass yes` for Micro/Ultra Micro tiers since the stripped online account hooks cause OOBE to stall. |
+| **Windows 11/10 Pro / Pro for Workstations** | Full | Works with all tiers. Identical behavior to Home for debloat purposes. |
+| **Windows Enterprise** | Full | Fewer consumer integrations to begin with — many removals will produce "not found" skips (harmless). |
+| **Windows LTSC (IoT/Enterprise LTSC)** | Light | Already heavily debloated by Microsoft. Most removal targets don't exist in LTSC — expect many "not found" errors (harmless). Only TPM bypass, driver integration, folder shortcuts, compression, performance tweaks, and service disabling are useful. |
 
-If you want an aggressive debloat on a Home or Pro system, **install the stock ISO first**, then use **BakuretsuClean** to debloat the running OS. This avoids corrupting the installer and gives you a stable installation with the same result.
+### Key Realization
 
+The installation problems previously attributed to "corrupted ISOs" or "edition incompatibility" were actually caused by:
+
+1. **Hyper-V Generation 1 boot order** — the VM boots the ISO instead of the hard disk on every restart, looping back to "Install Now" (Section 1 of [VM Troubleshooting](#virtual-machine-troubleshooting)).
+2. **Stripped OOBE hooks** — Micro/Ultra Micro tiers remove the telemetry and online account frameworks the OOBE wizard expects, causing it to hang at "Just a moment..." (Section 2 of [VM Troubleshooting](#virtual-machine-troubleshooting)).
+
+**Both are easily fixed** — unmount the ISO after install, or use `-OOBEBypass yes` to skip the wizard entirely. The debloated ISO itself is fine.
+
+### For Home/Pro ISOs — Use the Tiers
+
+Home and Pro editions respond identically to debloating. Choose the tier that matches your needs:
+
+| Tier | Command | Result |
+|------|---------|--------|
+| **Standard** | `-SafeMode` or pick options | Clean ISO, OOBE works normally. ~18 GB free. |
+| **Micro** | `-MicroMode yes -OOBEBypass yes` | Heavily stripped, OOBE skipped, auto-logon. ~8-12 GB free. |
+| **Ultra Micro** | `-UltraMicroMode yes` | Maximum stripping, everything auto-enabled. ~122 GB free. |
+
+Or if you prefer to debloat a live system instead of the ISO:
 ```
 BakuretsuClean — live-OS debloater (included in the repo)
 Run: BakuretsuClean\RunDebloater.bat as Administrator
@@ -386,7 +404,7 @@ LTSC (Long-Term Servicing Channel) editions are Microsoft's own debloated Window
 ## Credits
 
 - Original script by [itsNileshHere](https://github.com/itsNileshHere/Windows-ISO-Debloater)
-- Enhanced by shirayukimikoto and fujiwarasayo
+- Enhanced by shirayukimikoto
 - Inspired by KernelOS and Windows X-Lite stripped builds
 - [tiny11builder](https://github.com/ntdevlabs/tiny11builder) for inspiration
 - [Winaero](https://winaero.com/) for registry optimization techniques
