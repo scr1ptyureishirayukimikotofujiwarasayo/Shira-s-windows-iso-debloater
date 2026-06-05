@@ -403,8 +403,7 @@ LTSC (Long-Term Servicing Channel) editions are Microsoft's own debloated Window
 
 ## Credits
 
-- Original script by [itsNileshHere](https://github.com/itsNileshHere/Windows-ISO-Debloater)
-- Enhanced by shirayukimikoto and fujiwarasayo
+- Created by shirayukimikoto and fujiwarasayo
 - Inspired by MSMG Toolkit, KernelOS, and Windows X-Lite stripped builds
 - [tiny11builder](https://github.com/ntdevlabs/tiny11builder) for inspiration
 - [Winaero](https://winaero.com/) for registry optimization techniques
