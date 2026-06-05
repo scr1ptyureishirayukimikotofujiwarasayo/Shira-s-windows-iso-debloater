@@ -8,7 +8,7 @@ Three tools in one repo for debloating, customizing, and repairing Windows ISOs 
 
 | Tool | Type | What It Does | When to Use |
 |------|------|-------------|-------------|
-| **isoDebloaterScript.ps1** | ISO debloater | Strips bloat from a Windows ISO before installation. Removes AppX packages, features, Edge, AI, OneDrive, services, telemetry, and builds a debloated bootable ISO. | **Before installing Windows** — create a clean ISO to install from scratch. |
+| **isoDebloaterScript.ps1** | ISO debloater | Strips bloat from a Windows ISO before installation. Removes AppX packages, features, Edge, AI, OneDrive, services, telemetry, and builds a deboated bootable ISO. | **Before installing Windows** — create a clean ISO to install from scratch. |
 | **rintechtoolkit\\isoToolkit.ps1** | ISO modding / repair toolkit | Menu-driven toolkit for integrating updates, drivers, .NET, registry tweaks, OEM branding, wallpapers, autounattend.xml, WIM operations, and repairing/restoring features and WinRE from a donor ISO. | **After debloating** — fine-tune the ISO with customizations, restore removed components, or repair corrupted images. |
 | **BakuretsuClean\\** | Live OS debloater | Debloats an already-installed Windows system. Removes AppX packages, disables services, blocks telemetry, applies privacy tweaks. Includes revert support. | **After installing Windows** — debloat a live system without touching the ISO. |
 
@@ -48,6 +48,85 @@ Three tools in one repo for debloating, customizing, and repairing Windows ISOs 
 
 ---
 
+## Debloat Tiers
+
+The ISO debloater has **three tiers** of aggressiveness. Each tier includes everything from the one below it.
+
+### Tier 1: Standard (`-SafeMode` or select options individually)
+
+The baseline. Removes AppX bloatware, optional features, OneDrive, Edge, AI components, and applies privacy/performance tweaks. **Safe for any Windows edition.**
+
+| Category | What's Removed |
+|----------|---------------|
+| **AppX packages** (85+) | Bing (News, Weather, Search, Translator), Xbox (App, GameOverlay, GamingOverlay, SpeechToText, TCUI), Skype, Teams, OneNote, Clipchamp, 3D Viewer, Maps, Solitaire, Mixed Reality, People, Camera, Photos, Paint3D, Wallet, GamingApp, GetHelp, GetStarted, FeedbackHub, MicrosoftFamily, OfficeHub, Outlook, PowerAutomate, QuickAssist, StickyNotes, ToDos, Zune (Music, Video), Alarms, DevHome, CrossDevice, CommunicationsApps, PeopleExperienceHost, WebExperience, Calling, CapturePicker, NarratorQuickStart, ParentalControls, Print3D, SecureAssessmentBrowser, XGpuEjectDialog, Advertising, Journal, ECApp, AV1/HEVC/HEIF/VP9/MPEG2/Raw/Dolby codec extensions, ScreenSketch, WebMediaExtensions |
+| **Capabilities** (15+) | Internet Explorer, WordPad, PowerShell ISE, Media Player, Steps Recorder, Quick Assist, Print 3D, Wireless Display, Print Management Console, handwriting/OCR/speech/text-to-speech for detected language |
+| **Windows packages** (10+) | Internet Explorer, WordPad, MediaPlayer, TabletPCMath, StepsRecorder, QuickAssist, PowerShell ISE, printing PMCPPC/WFS, XPS Viewer, ADAM client |
+| **OneDrive** | Setup.exe (SysWOW64 + System32), shortcuts, WinSxS components, appdata folders, registry run keys |
+| **Edge** | DISM Remove-Edge, Stable + DevTools AppX, EdgeUpdate registry/service, Program Files, scheduled tasks, WinSxS components, WebView2 (Win10 only — kept on Win11 for OOBE) |
+| **AI / Copilot** | Copilot, Recall, AIX, CoreAI, GameAssist, WritingAssistant, OfficeActionsServer AppX packages + 30+ registry policies blocking AI in Search, Edge, Paint, Notepad, Office, and system-wide. Hidden CBS packages unhidden and removed. |
+| **Widgets** | WebExperience + Widgets AppX packages, News & Interests policies, scheduled tasks, WinSxS components |
+| **Services disabled** (40+) | DiagTrack, dmwappushsvc, WSearch, SysMain, MapsBroker, lfsvc, PhoneSvc, MessagingService, PimIndexMaintenanceSvc, BcastDVRUserService, XblAuthManager, XblGameSave, XboxNetApiSvc, XboxGipSvc, WalletService, PrintNotify, LicenseManager, WbioSrvc, FrameServer, CaptureService, SensorService, SensorDataService, SensrSvc, TabletInputService, TrkWks, FontCache, DusmSvc, WpnService, StiSvc, wisvc, RetailDemo, tzautoupdate, W32Time, wcncsvc, WerSvc, WiaRpc |
+| **Registry / Privacy** | Sponsored apps, telemetry (AllowTelemetry=0), mouse acceleration, Meet Now, ads & suggestions, BitLocker auto-encryption, GameDVR/GameBar, Cortana, consumer features, location tracking, Find My Device, Windows Tips, background apps, web search, error reporting, delivery optimization, advertising ID, clipboard history, activity feed, timeline, setting sync, Windows Ink, lock screen suggestions |
+| **Performance** | Disable visual effects, animations, hibernation. Optimize CPU priority (Win32PrioritySeparation=38), large system cache, disable paging executive, network throttling, ICMP redirects, Game Mode |
+
+**Approximate footprint:** ~18–22 GB free on a 126 GB disk (varies by edition).
+
+---
+
+### Tier 2: Micro (`-MicroMode yes`)
+
+Everything in Tier 1, plus aggressive stripping. **Comparable to Micro 10/11 builds.** Breaks OOBE (use `-OOBEBypass yes`). Auto-enables: ExtremeDebloat, DefenderRemove, WinUpdateDisable, HyperVRemove, TaskCleanup, WinSxSCleanup, TPMBypass.
+
+| Category | What's Added Beyond Tier 1 |
+|----------|---------------------------|
+| **Extreme services** | wlidsvc (MS Account), UnistoreSvc, UserDataSvc, OneSyncSvc, Spooler (printing), LanmanServer (file sharing), LanmanWorkstation, fdPHost, FDResPub, SSDP/UPnP, SCardSvr, ScDeviceEnum, SmsRouter, BTAGService (Bluetooth audio), bthserv (Bluetooth), Fax, hidserv (keyboard/mouse special keys) |
+| **Additional AppX** | DesktopAppInstaller (winget), StorePurchaseApp, WebMediaExtensions, AssignedAccessLockApp, SecureAssessmentBrowser |
+| **Additional capabilities** | Hello.Face, OneCoreUAP.OneSync, OpenSSH.Client, Xps.Viewer, Print.Fax.Scan, MathRecognizer, ALL language handwriting/OCR/speech/TTS for all languages |
+| **Additional packages** | Hello-Face, Print-Fax-Scan-Feature, VBSCRIPT, Legacy WOW64 compatibility, Notepad (Win10), MSPaint (Win10), MediaPlayer |
+| **Defender (aggressive)** | 11 services disabled (including WdBoot/WdFilter/WdDevFlt kernel drivers + Security Center), 40+ registry policy keys, files stripped from Program Files + ProgramData + System32 + drivers, 7 WinSxS patterns, scheduled tasks nuked, 8 post-install RunOnce cleanup commands |
+| **WinRE** | Winre.wim deleted, Recovery directory removed, WinRE registry disabled |
+| **Windows Update** | All WU services disabled, WU scheduled tasks deleted, WU/waasmedic/updateorchestrator WinSxS components removed, WU orchestrator registry nuked, DoNotConnectToWindowsUpdateInternetLocations policy set |
+| **Fonts** | All non-essential fonts removed — keeps only Segoe UI, Arial, Times New Roman, Courier New, Marlett, Symbol, Wingdings, Tahoma, Verdana, CJK system fonts |
+| **WinSxS (deep)** | 50 patterns: winre, recovery, bitlocker, security, defender, speech, hyperv, virtual, containers, sandbox, WSL, print, fax, scanner, xps, hello, biometrics, narrator, accessibility, magnifier, screen, camera, tablet, touch, pen, ink, 3D, holographic, terminal, powershell, netfx, IIS, workfolders, branchcache, directaccess, RAS, VPN, NDIS, mobile, telephony, ADAM, LDAP, MSMQ, multipoint, RDMA, storage replica, tiering, DFS, failover |
+| **Micro registry** | Store blocking, Mail/Calendar disable, live tiles off, push notifications off, all background apps force-deny, lock screen off, task view off, people bar off, news/feeds off, widgets off, nearby sharing off, game DVR off, Cortana force-disable, find my device off, sync force-disable, ink workspace off, clipboard history/cloud off, activity feed off |
+
+**Approximate footprint:** ~8–12 GB free on a 126 GB disk.
+
+---
+
+### Tier 3: Ultra Micro (`-UltraMicroMode yes`)
+
+Everything in Tier 2, plus extreme disk space recovery. **Closes the ~10 GB gap with ultra-stripped Micro 10 builds (122 GB free on 126 GB disk).** Auto-enables MicroMode + OOBEBypass + everything.
+
+| Category | What's Added Beyond Tier 2 |
+|----------|---------------------------|
+| **Servicing stack backups** | Entire `WinSxS\Backup\` directory stripped (~1–3 GB) |
+| **Servicing manifests** | 60+ bloat component manifests deleted from `WinSxS\Manifests\` — defender, edge, xbox, skype, hyperv, print, fax, scanner, and more (~500 MB–1 GB) |
+| **Driver store** | Non-critical drivers stripped: printer, scanner, fax, modem, bluetooth, wifi, wwan, sensor, camera, biometric, smartcard, NFC, touch, pen, tablet, audio, media, DRM, display, battery, thermal (~500 MB–2 GB) |
+| **NGEN cache** | Pre-compiled .NET assemblies removed from `assembly\NativeImages*` and `Microsoft.NET\assembly\GAC_MSIL`; .NET will JIT on first run (~300–500 MB) |
+| **Language MUI files** | All `xx-XX` directories in `System32` and `SysWOW64` removed except the detected language (~300 MB–1 GB) |
+| **Visual resources** | All wallpapers, themes, cursors, 4K wallpapers, screen images deleted (~100–200 MB) |
+| **Migration data** | `System32\migration`, `migwiz`, `oobe\migrate`, `Sysprep` files stripped (~100–300 MB) |
+| **Reserved storage** | All ReserveManager registry keys zeroed; RunOnce fires `compact /compactos:always` on first boot (~7 GB live savings) |
+| **Ultra WinSxS** | 50 additional broad patterns: servicing, winsat, migration, upgrade, compatibility, driver, remotedesktop, DVD, bluray, media, location, wallet, parentalcontrols, family, easeofaccess, windowstogo, spelling, dictation, networking, SNMP, telnet, TFTP, RIP, LPD, LPR, IPC, RPC (~500 MB–2 GB) |
+| **Ultra registry + RunOnce** | System restore disable, prefetch/superfetch disable, pagefile disable, dism /resetbase run-once, WinSxS Backup/ManifestCache strip on live system |
+| **Additional AppX** | Cortana, Search, Apprep.ChxApp, ECApp |
+| **Additional packages** | IE, StepsRecorder, QuickAssist, PowerShell ISE, printing PMCPPC/WFS, XPS Viewer, ADAM client |
+
+**Approximate footprint:** ~2–4 GB used on a 126 GB disk (~122 GB free).
+
+---
+
+### Which Tier Should You Use?
+
+| Tier | Command | Use Case |
+|------|---------|----------|
+| **Standard** | `-SafeMode` or pick options manually | Safe for any edition (Home/Pro/Enterprise/LTSC). No OOBE issues. |
+| **Micro** | `-MicroMode yes` | Maximum stripping with working desktop. Combine with `-OOBEBypass yes` to skip the broken OOBE. |
+| **Ultra Micro** | `-UltraMicroMode yes` | Closest to Micro 10/11 builds. Maximum free disk space. OOBEBypass auto-enabled. |
+
+---
+
 ## Cleanup
 
 After one or more debloat/modding sessions, leftover files accumulate:
@@ -67,84 +146,148 @@ Run **`Cleanup.bat`** (as Administrator) from the toolkit folder to clear everyt
 
 ---
 
+## Virtual Machine Troubleshooting
+
+> **IMPORTANT:** These issues are caused by **VM configuration quirks** and the **natural side effects of debloating** — they are **NOT defects in your debloated ISO.** Do not file a bug report for these.
+
+### 1. Endless "Install Now" Loop (Hyper-V Gen 1)
+
+**Symptom:** After installation reaches 100% and reboots, the VM drops back into the initial setup screen endlessly.
+
+**Root Cause:** Hyper-V Generation 1 VMs boot from the attached virtual DVD drive before the virtual hard disk on every restart.
+
+**Fix:** Power off the VM completely. Go to **VM Settings → DVD Drive** → set **Media** to **"None"** (unmount the ISO). Apply and start the VM cold. Alternatively, do not press any key when *"Press any key to boot from CD..."* appears.
+
+### 2. OOBE Stuck at Region / "Just a Moment" Loop
+
+**Symptom:** The system hangs on the blue "Just a moment..." screen or loops endlessly at the region/keyboard selection screen.
+
+**Root Cause:** Debloating strips the consumer telemetry and online account frameworks that the OOBE wizard expects. The interactive OOBE panics when its online hooks are absent.
+
+**Fix:**
+1. At the stuck screen, press **Shift + F10** (or **Fn + Shift + F10** on laptops) to open Command Prompt.
+2. Enable the built-in Administrator account:
+   ```
+   net user administrator /active:yes
+   ```
+3. Kill the stuck OOBE process and relaunch it properly:
+   ```
+   cd C:\Windows\System32\oobe
+   msoobe
+   ```
+4. The OOBE wizard will restart. Go through the screens normally — it should now proceed past the region section.
+5. **If testing in Hyper-V:** After completing the OOBE, you **must restart the virtual machine** (Action → Reset or Ctrl+Alt+End → restart). Hyper-V does not properly transition from the OOBE environment to the desktop without a cold restart.
+6. On first login, you can set up your own user account and disable the built-in Administrator if desired.
+
+### 3. Automatic OOBE Bypass (Built Into the Debloater)
+
+Instead of fixing OOBE loops manually, you can have the debloater **inject an automatic bypass** directly into the ISO. When enabled (`-OOBEBypass yes` or answer Yes at the prompt), the debloater does two things:
+
+1. **Injects `SetupComplete.cmd`** into the ISO (`\Windows\Setup\Scripts\`). This script runs at the very end of Windows Setup and:
+   - Creates a local Administrator account (`Admin`, no password)
+   - Configures auto-logon so the system boots straight to desktop
+   - Force-sets all OOBE bypass registry keys (`OOBEInProgress=0`, `SetupType=0`, `BypassNRO=1`, etc.)
+   - Disables the OOBE scheduled tasks that would otherwise fire
+
+2. **Pre-seeds offline registry keys** in the mounted image so the bypass is baked in before the first boot even happens.
+
+**Result:** After installation completes, the system reboots once and lands directly on the desktop as `Admin` — no OOBE screens, no region selection, no account creation, no "Just a moment" loop. Zero user interaction needed after install.
+
+**How to use:**
+```
+.\isoDebloaterScript.ps1 -OOBEBypass yes
+```
+Or choose "Yes" at the interactive prompt: *"Automatically bypass OOBE after install?"*
+
+**Security note:** The auto-created `Admin` account has no password. Set one on first login or disable the account and create your own.
+
+---
+
 ## What Happens During Execution
 
 | Step | Description | Time |
 |------|-------------|------|
 | ISO selection & backup | Copies original ISO to `ISOBackup\` folder | ~1-2 min |
 | Mount & extract | Copies ISO contents to temp working directory | ~2-5 min |
-| Package removal | Removes 85+ AppX packages via DISM | ~3-8 min |
+| Package removal | Removes AppX packages via DISM | ~3-8 min |
 | Edge removal | Strips Edge browser, WebView, EdgeUpdate | ~1-3 min |
 | AI removal | Removes Copilot, Recall, AI components | ~1-3 min |
 | Registry tweaks | Privacy, performance, telemetry policies | ~1-2 min |
-| Service disabling | 45+ unnecessary services disabled | <1 min |
+| Service disabling | Unnecessary services disabled | <1 min |
 | Widgets removal | Strips Widgets, News, WebExperience | ~30 sec |
 | Hyper-V removal (optional) | Removes virtualization platform | ~1-2 min |
-| Defender disable (optional) | Registry-based Defender policies | ~30 sec |
-| Scheduled tasks | Disables 45+ telemetry/bloat tasks | ~1 min |
-| WinSxS cleanup | Conservative bloat component cleanup | ~2-5 min |
+| Defender removal (optional) | Aggressive Defender strip | ~1-2 min |
+| Scheduled tasks (optional) | Disables telemetry/bloat tasks | ~1 min |
+| WinSxS cleanup (optional) | Conservative bloat component cleanup | ~2-5 min |
+| Micro Mode stripping (optional) | WinRE, fonts, WU, deep WinSxS, Micro registry | ~5-10 min |
+| Ultra Micro stripping (optional) | Servicing backups, driver store, NGEN, MUI, manifests, manifests, CompactOS | ~10-20 min |
+| OOBE Bypass injection (optional) | SetupComplete.cmd + offline reg keys | <1 min |
 | Privacy tweaks | Cortana, location, activity, ads policies | <1 min |
 | Image cleanup | DISM component cleanup & compression | ~10-20 min |
 | Health check & repair | Checks & repairs component store | ~2-5 min |
 | Export WIM | Compresses modified image | ~5-20 min |
 | ISO creation | Builds bootable ISO with oscdimg | ~2-5 min |
-| **Total (typical)** | | **~25-50 min** |
-| **Total (with ESD compress)** | | **~40-80 min** |
+| **Total (Standard)** | | **~25-50 min** |
+| **Total (Micro)** | | **~35-65 min** |
+| **Total (Ultra Micro)** | | **~50-90 min** |
 
 ---
 
-## All Options Explained
+## Command-Line Automation
 
-### `Remove unnecessary packages?` (AppxRemove)
-Removes 85+ provisioned AppX packages from the ISO including: Bing, Xbox, Skype, Teams, OneNote, Clipchamp, 3D Viewer, Maps, Solitaire, Mixed Reality, People, Camera, Photos, Paint3D, various codec extensions, and more. This is the bulk of bloat removal.
+```powershell
+# Fully automated Standard debloat
+.\isoDebloaterScript.ps1 -noPrompt -isoPath "C:\Win11.iso" -winEdition "Windows 11 Pro" -outputISO "Win11Lite"
 
-### `Remove unnecessary features?` (CapabilitiesRemove)
-Removes 25+ optional Windows features: Internet Explorer, WordPad, PowerShell ISE, Media Player, Steps Recorder, Quick Assist, handwriting/OCR/speech recognition, Fax & Scan, Hello Face, XPS Viewer, Print 3D, OpenSSH Client, and more.
+# Micro mode — maximum stripping, OOBE bypass auto-injected
+.\isoDebloaterScript.ps1 -MicroMode yes -OOBEBypass yes -isoPath "C:\Win11.iso" -winEdition "Windows 11 Pro" -outputISO "Win11Micro"
 
-### `Remove OneDrive?` (OnedriveRemove)
-Strips OneDrive from SysWOW64, removes shortcuts, cleans up WinSxS components, and removes OneDrive appdata folders. Registry policies prevent reinstallation.
+# Ultra Micro mode — extreme disk savings, everything auto-enabled
+.\isoDebloaterScript.ps1 -UltraMicroMode yes -isoPath "C:\Win11.iso" -winEdition "Windows 11 Pro" -outputISO "Win11UltraMicro"
 
-### `Remove Microsoft Edge?` (EDGERemove)
-Runs DISM Remove-Edge, removes Edge AppX packages (Stable, DevTools, WebView), cleans Edge registry keys (WOW6432Node, EdgeUpdate services), removes Edge Program Files, scheduled tasks, and WinSxS components. Registry policies block Edge reinstallation.
+# Safe mode — remove only apps, keep everything else
+.\isoDebloaterScript.ps1 -SafeMode
 
-### `Remove AI Components?` (AIRemove)
-Removes Copilot, Recall, AIX, CoreAI, GameAssist, WritingAssistant, and OfficeActions packages. Applies 30+ registry policies to disable AI in Search, Edge, Paint, Notepad, Office, and system-wide. Unhides and removes hidden CBS AI packages. Sets post-install RunOnce commands to disable the WSAIFabricSvc service.
+# Custom selection
+.\isoDebloaterScript.ps1 -AppxRemove yes -CapabilitiesRemove yes -OnedriveRemove yes -EDGERemove yes -AIRemove yes -DefenderRemove yes -OOBEBypass yes
 
-### `Bypass TPM check?` (TPMBypass)
-Sets LabConfig registry keys to bypass TPM 2.0, Secure Boot, CPU, RAM, Storage, and Disk checks. Modifies boot.wim for the same bypasses. Replaces appraiserres.dll with empty file. Hides unsupported hardware watermark.
+# LTSC ISO — skip removals, apply only universal optimizations
+.\isoDebloaterScript.ps1 -AppxRemove no -CapabilitiesRemove no -OnedriveRemove no -EDGERemove no -AIRemove no -WidgetsRemove no -DefenderRemove no -ServicesDisable yes -PerformanceTweaks yes -TPMBypass yes -ESDConvert yes
+```
 
-### `Enable user folders?` (UserFoldersEnable)
-Restores Desktop, Documents, Downloads, Music, Pictures, and Videos shortcuts in File Explorer on Windows 11.
+### All Parameters
 
-### `Integrate Intel RST/VMD drivers?` (DriverIntegrate)
-Downloads and integrates Intel RAID/VMD drivers into both install.wim and boot.wim. Useful for laptops with Intel VMD storage controllers.
-
-### `Compress the ISO?` (ESDConvert)
-Uses recovery (ESD) compression instead of standard WIM compression. Reduces ISO size but takes significantly longer (15-45 min extra).
-
-### `Use Oscdimg for ISO creation?` (useOscdimg)
-Uses Microsoft's oscdimg.exe for reliable bootable ISO creation. Automatically downloads if not found. Alternative is the experimental IMAPI2FS COM method.
-
-### `Remove Windows Defender/Security?` (DefenderRemove)
-**EXPERIMENTAL — safe mode only.** Disables Defender services (WinDefend, WdNisSvc, SecurityHealthService, etc.), applies registry policies to block real-time protection and SmartScreen, sets post-install RunOnce commands. Does NOT delete files from WinSxS (would corrupt installer). Disables SmartScreen and AppHost web content evaluation.
-
-### `Remove Widgets completely?` (WidgetsRemove)
-Removes Widgets and WebExperience AppX packages, disables News & Interests via policy, removes Widgets scheduled tasks, cleans WinSxS components.
-
-### `Disable Windows Update?` (WinUpdateDisable)
-Disables wuauserv, WaaSMedicSvc, and UsoSvc services. Sets group policies to block automatic updates, driver updates, and WU internet access.
-
-### `Remove Hyper-V components?` (HyperVRemove)
-Disables Microsoft-Hyper-V-All via DISM, disables all Hyper-V services (HvHost, vmic*), and removes Hyper-V Windows packages.
-
-### `Enable Extreme Debloat mode?` (ExtremeDebloat)
-Enables deeper service disabling including: Print Spooler, Bluetooth, LAN Server/Workstation, SSDP/UPnP, Smart Card, Fax, SMS Router. Use only if you know you won't need these services.
-
-### `Disable unnecessary services?` (ServicesDisable)
-Disables 45+ services: DiagTrack, WSearch, SysMain, Xbox Live, Wallet, Maps, Phone, OneSync, PrintNotify, WaaSMedicSvc, TabletInput, FontCache, RetailDemo, Windows Error Reporting, and more.
-
-### `Apply performance tweaks?` (PerformanceTweaks)
-Disables visual effects, animations, hibernation. Optimizes CPU scheduling, memory management, prefetch/Superfetch. Disables network throttling, ICMP redirects, Game Mode, GameDVR.
+| Parameter | Values | Default | Description |
+|-----------|--------|---------|-------------|
+| `-noPrompt` | (switch) | off | Fully automated — requires `-isoPath`, `-winEdition`, `-outputISO` |
+| `-isoPath` | path string | prompted | Path to source Windows ISO |
+| `-winEdition` | edition name | prompted | Edition name to mount (e.g. "Windows 11 Pro") |
+| `-outputISO` | filename | prompted | Output ISO filename (no extension) |
+| `-SafeMode` | (switch) | off | AppX removal only, safe for any edition |
+| `-AppxRemove` | yes/no | yes | Remove 85+ bloatware AppX packages |
+| `-CapabilitiesRemove` | yes/no | yes | Remove 15+ optional Windows features |
+| `-OnedriveRemove` | yes/no | yes | Completely remove OneDrive |
+| `-EDGERemove` | yes/no | yes | Remove Microsoft Edge |
+| `-AIRemove` | yes/no | yes | Remove Copilot, Recall, all AI components |
+| `-TPMBypass` | yes/no | no | Bypass TPM 2.0, Secure Boot, CPU checks |
+| `-UserFoldersEnable` | yes/no | yes | Restore Desktop/Documents folders on Win11 |
+| `-DriverIntegrate` | yes/no | no | Integrate Intel RST/VMD drivers |
+| `-ESDConvert` | yes/no | no | Compress ISO with recovery (ESD) compression |
+| `-useOscdimg` | yes/no | yes | Use oscdimg.exe for reliable ISO build |
+| `-useDISM` | yes/no | no | Force DISM CLI over PowerShell cmdlets |
+| `-DefenderRemove` | yes/no | no | **Aggressive** — strips Defender completely (files, drivers, WinSxS, Security Center) |
+| `-WidgetsRemove` | yes/no | yes | Remove Widgets and WebExperience |
+| `-WinUpdateDisable` | yes/no | no | Disable Windows Update services + policies |
+| `-HyperVRemove` | yes/no | no | Remove Hyper-V virtualization platform |
+| `-ExtremeDebloat` | yes/no | no | Disable print spooler, Bluetooth, LAN sharing, etc. |
+| `-**MicroMode**` | yes/no | no | **Tier 2** — WinRE, fonts, deep WinSxS, aggressive Defender, WU strip |
+| `-**UltraMicroMode**` | yes/no | no | **Tier 3** — servicing backups, driver store, NGEN, MUI, manifests, CompactOS |
+| `-ServicesDisable` | yes/no | yes | Disable 40+ telemetry/bloat services |
+| `-PerformanceTweaks` | yes/no | yes | CPU, memory, network optimizations |
+| `-TaskCleanup` | yes/no | no | Disable 45+ telemetry scheduled tasks |
+| `-WinSxSCleanup` | yes/no | no | Conservative WinSxS bloat directory removal |
+| `-UseAutounattend` | yes/no | no | Use autounattend.xml for unattended setup (CAUTION) |
+| `-**OOBEBypass**` | yes/no | no | Inject SetupComplete.cmd — auto-creates Admin account, skips OOBE entirely |
 
 ---
 
@@ -173,58 +316,6 @@ Errors are categorized by source (DISM, AppX, Mount, Export, Health, etc.) for e
 
 ---
 
-## Command-Line Automation
-
-```powershell
-# Fully automated run
-.\isoDebloaterScript.ps1 -noPrompt -isoPath "C:\Win11.iso" -winEdition "Windows 11 Pro" -outputISO "Win11Lite"
-
-# Customize what to remove
-.\isoDebloaterScript.ps1 -AppxRemove yes -CapabilitiesRemove yes -OnedriveRemove yes -EDGERemove yes -AIRemove yes
-
-# Extreme debloat with TPM bypass and ESD compression
-.\isoDebloaterScript.ps1 -ExtremeDebloat yes -TPMBypass yes -ESDConvert yes -WinUpdateDisable yes
-
-# Safe mode - remove only apps, keep everything else
-.\isoDebloaterScript.ps1 -AppxRemove yes -CapabilitiesRemove no -OnedriveRemove no -EDGERemove no -AIRemove no -DefenderRemove no
-
-# LTSC ISO - skip removals, apply only universal optimizations
-.\isoDebloaterScript.ps1 -AppxRemove no -CapabilitiesRemove no -OnedriveRemove no -EDGERemove no -AIRemove no -WidgetsRemove no -DefenderRemove no -ServicesDisable yes -PerformanceTweaks yes -TPMBypass yes -ESDConvert yes
-```
-
-### All Parameters
-
-| Parameter | Values | Default |
-|-----------|--------|---------|
-| `-noPrompt` | (switch) | off |
-| `-isoPath` | path string | prompted |
-| `-winEdition` | edition name | prompted |
-| `-outputISO` | filename | prompted |
-| `-useDISM` | yes/no | yes |
-| `-AppxRemove` | yes/no | yes |
-| `-CapabilitiesRemove` | yes/no | yes |
-| `-OnedriveRemove` | yes/no | yes |
-| `-EDGERemove` | yes/no | yes |
-| `-AIRemove` | yes/no | yes |
-| `-TPMBypass` | yes/no | no |
-| `-UserFoldersEnable` | yes/no | yes |
-| `-DriverIntegrate` | yes/no | no |
-| `-ESDConvert` | yes/no | no |
-| `-useOscdimg` | yes/no | yes |
-| `-DefenderRemove` | yes/no | no |
-| `-WidgetsRemove` | yes/no | yes |
-| `-WinUpdateDisable` | yes/no | no |
-| `-HyperVRemove` | yes/no | no |
-| `-ExtremeDebloat` | yes/no | no |
-| `-MicroMode` | yes/no | no |
-| `-ServicesDisable` | yes/no | yes |
-| `-PerformanceTweaks` | yes/no | yes |
-| `-TaskCleanup` | yes/no | no |
-| `-WinSxSCleanup` | yes/no | no |
-| `-UseAutounattend` | yes/no | no |
-
----
-
 ## Skip / Stuck Recovery
 
 - **Press `S`** during any looping operation (package removal, service disabling, scheduled tasks, WinSxS cleanup) to skip the remaining items in that section.
@@ -233,16 +324,55 @@ Errors are categorized by source (DISM, AppX, Mount, Export, Health, etc.) for e
 
 ---
 
+## Which ISO Should You Use?
+
+| ISO Edition | Debloat Safety | Recommendation |
+|------------|---------------|---------------|
+| **Windows LTSC (IoT/Enterprise LTSC)** | Minimal impact | LTSC is already heavily debloated by Microsoft. Most removal options target components that don't exist in LTSC. Errors are normal and harmless. See the LTSC section below. |
+| **Windows Enterprise** | Safe | Good for moderate debloating. Fewer consumer integrations than Pro. |
+| **Windows Pro / Pro for Workstations** | Moderate | Use Standard tier. Skip `DefenderRemove`, `WinSxSCleanup`, and `TaskCleanup` unless you know what you're doing. |
+| **Windows Home** | Risky | Home edition has tight consumer integrations. Only use `-SafeMode` or bare minimum options. |
+
+### For Home/Pro ISOs — Debloat Live Instead
+
+If you want an aggressive debloat on a Home or Pro system, **install the stock ISO first**, then use **BakuretsuClean** to debloat the running OS. This avoids corrupting the installer and gives you a stable installation with the same result.
+
+```
+BakuretsuClean — live-OS debloater (included in the repo)
+Run: BakuretsuClean\RunDebloater.bat as Administrator
+Features: AppX removal, service disabling, telemetry blocking, privacy tweaks, revert support
+```
+
+---
+
+## LTSC Guidance
+
+LTSC (Long-Term Servicing Channel) editions are Microsoft's own debloated Windows builds. They ship without Store apps, Widgets, Copilot, AI, Xbox, Bing, and most consumer features. Running aggressive removal options on LTSC will produce **"not found" / "failed" errors** — this is normal because the script tries to remove components LTSC never had.
+
+**Recommended: skip these on LTSC**
+```
+-AppxRemove no -CapabilitiesRemove no -OnedriveRemove no -EDGERemove no
+-AIRemove no -WidgetsRemove no -DefenderRemove no -TaskCleanup no -WinSxSCleanup no
+```
+
+**Still useful on LTSC:**
+```
+-TPMBypass yes -UserFoldersEnable yes -DriverIntegrate yes -ESDConvert yes
+-useOscdimg yes -PerformanceTweaks yes -ServicesDisable yes
+```
+
+---
+
 ## Tips
 
-- **LTSC ISOs are already debloated** — errors during debloating are normal and harmless. Skip most removal options (AppX, features, Edge, AI, Widgets, OneDrive, tasks, WinSxS) and only enable TPM bypass, driver integration, folder shortcuts, compression, and performance tweaks.
-- **For Home/Pro systems**, install the stock ISO and use **BakuretsuClean** (included) to debloat the live OS instead.
+- **Understand the tiers** — Standard is safe for all editions. Micro breaks OOBE but produces a working desktop (use `-OOBEBypass yes`). Ultra Micro maximizes free space but removes more components.
+- **LTSC ISOs are already debloated** — errors during debloating are normal and harmless. Skip most removal options.
+- **Always test in a VM first** — before deploying a debloated ISO to real hardware, install it in Hyper-V or VMware to verify it boots and runs.
 - **Use a fast SSD** for the working directory — DISM operations are disk-intensive.
 - **Disable real-time AV** temporarily — some AV products interfere with DISM mounting operations.
-- **Don't use Defender removal** unless you're comfortable with potential security implications and accept it's experimental.
 - **The backup ISO** at `ISOBackup\original_backup.iso` can be deleted after confirming the debloated ISO works.
 - **Check the error logs** at `ErrorLogs\` if the debloated ISO has installation issues.
-- **If installation fails with a boot loop**, try re-running without `DefenderRemove` and `ExtremeDebloat`.
+- **Use the rintechtoolkit after debloating** — to add drivers, customize wallpaper, set OEM branding, create autounattend.xml, or recover removed components (WinRE, features) from a donor ISO.
 
 ---
 
