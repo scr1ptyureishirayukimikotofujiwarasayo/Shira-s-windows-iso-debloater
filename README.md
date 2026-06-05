@@ -328,12 +328,45 @@ Errors are categorized by source (DISM, AppX, Mount, Export, Health, etc.) for e
 
 **Any Windows edition can be debloated safely.** Earlier assumptions that Home/Pro editions were "risky" were based on misdiagnosed VM issues — the actual root cause of installation loops was **incorrect Hyper-V settings and poor OOBE management** (see [VM Troubleshooting](#virtual-machine-troubleshooting) above), not ISO corruption or edition incompatibility.
 
-| ISO Edition | Debloat Impact | Notes |
-|------------|---------------|-------|
-| **Windows 11/10 Home** | Full | Works with all tiers. Use `-OOBEBypass yes` for Micro/Ultra Micro tiers since the stripped online account hooks cause OOBE to stall. |
-| **Windows 11/10 Pro / Pro for Workstations** | Full | Works with all tiers. Identical behavior to Home for debloat purposes. |
-| **Windows Enterprise** | Full | Fewer consumer integrations to begin with — many removals will produce "not found" skips (harmless). |
-| **Windows LTSC (IoT/Enterprise LTSC)** | Light | Already heavily debloated by Microsoft. Most removal targets don't exist in LTSC — expect many "not found" errors (harmless). Only TPM bypass, driver integration, folder shortcuts, compression, performance tweaks, and service disabling are useful. |
+### Best ISOs for Extreme Stripping (Micro / Ultra Micro)
+
+If your goal is maximum disk savings, **start with a leaner ISO** — you'll get faster results with fewer errors:
+
+| Priority | ISO Edition | Why It's Better |
+|----------|------------|-----------------|
+| **1st** | **Windows LTSC (IoT/Enterprise LTSC)** | Already stripped by Microsoft. No Store apps, Widgets, Copilot, Xbox, Bing, or consumer features. Extreme stripping completes in ~20-30 min with almost zero "not found" errors. The ideal base for Micro 10/11-style builds. |
+| **2nd** | **Windows Enterprise** | Fewer consumer integrations than Pro/Home. Many AI, advertising, and telemetry components are reduced or absent. Moderate error count during stripping. |
+| **3rd** | **Windows Pro / Pro for Workstations** | Full consumer load. All removal targets will be present and need processing. Expect longer run times. |
+| **4th** | **Windows Home** | Heaviest consumer integrations. Works fine but takes the longest to strip and produces the most errors (all harmless). |
+
+**Key insight:** Starting with LTSC saves 15-30 minutes per debloat run vs starting with Home, because the script has nothing to remove for ~40% of its targets. On LTSC, the "errors" are just the script saying "this package doesn't exist here" — your ISO was already lean.
+
+### Multi-Pass Stripping (Double / Triple Strip)
+
+Instead of running one massive debloat session, you can **run the debloater multiple times on the same ISO.** Each pass catches components the previous pass exposed or missed:
+
+```
+Pass 1: isoDebloaterScript.ps1 -MicroMode yes -OOBEBypass yes -isoPath "stock.iso" -outputISO "Pass1"
+Pass 2: isoDebloaterScript.ps1 -MicroMode yes -OOBEBypass yes -isoPath "Pass1.iso" -outputISO "Pass2"  
+Pass 3: isoDebloaterScript.ps1 -UltraMicroMode yes -isoPath "Pass2.iso" -outputISO "Final"
+```
+
+**Why this works:**
+- **DISM component cleanup** between passes (which the script runs automatically) removes orphaned packages and unlocks deeper WinSxS layers that were previously protected by dependency chains
+- The **Health Check & Repair** phase after each pass fixes any component store issues before the next pass
+- After the first pass strips the bulk, subsequent passes can reach deeper into the servicing stack and catch leftovers the first pass left behind
+- **Each pass compresses the WIM** (export), shrinking the ISO further — a triple-stripped LTSC ISO can be 40-50% smaller than a single-pass result
+
+**Recommended multi-pass strategy:**
+
+| Goal | Passes | Settings |
+|------|--------|----------|
+| **Clean daily-driver** | 1 pass | Standard tier (`-SafeMode` or custom options) |
+| **Maximum storage savings** | 2 passes | Both Micro tier (`-MicroMode yes -OOBEBypass yes`) |
+| **Micro 10/11 comparable** | 3 passes | 2x Micro + 1x Ultra Micro (final pass) |
+| **Absolute minimum footprint** | 3 passes on LTSC | 2x Micro + 1x Ultra Micro on an LTSC base |
+
+**Note:** Multi-pass stripping only makes sense on Micro or Ultra Micro tiers. Standard-tier passes won't gain much from repetition since they don't touch WinSxS or the servicing stack.
 
 ### Key Realization
 
