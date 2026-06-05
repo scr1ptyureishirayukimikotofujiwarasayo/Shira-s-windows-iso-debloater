@@ -8,8 +8,8 @@ Three tools in one repo for debloating, customizing, and repairing Windows ISOs 
 
 | Tool | Type | What It Does | When to Use |
 |------|------|-------------|-------------|
-| **isoDebloaterScript.ps1** | ISO debloater | Strips bloat from a Windows ISO before installation. Removes AppX packages, features, Edge, AI, OneDrive, services, telemetry, and builds a deboated bootable ISO. | **Before installing Windows** — create a clean ISO to install from scratch. |
-| **rintechtoolkit\\isoToolkit.ps1** | ISO modding / repair toolkit | Menu-driven toolkit for integrating updates, drivers, .NET, registry tweaks, OEM branding, wallpapers, autounattend.xml, WIM operations, and repairing/restoring features and WinRE from a donor ISO. | **After debloating** — fine-tune the ISO with customizations, restore removed components, or repair corrupted images. |
+| **isoDebloaterScript.ps1** | ISO debloater | Strips bloat from a Windows ISO before installation. Removes AppX packages, features, Edge, AI, OneDrive, services, telemetry, and builds a debloated bootable ISO. | **Before installing Windows** — create a clean ISO to install from scratch. |
+| **rintechtoolkit\\isoToolkit.ps1** | ISO modding / repair toolkit | Menu-driven toolkit for integrating updates, drivers, .NET, registry tweaks, OEM branding, wallpapers, autounattend.xml, browser data import, WIM operations, WinRE recovery, and repairing/restoring features from a donor ISO. | **After debloating** — fine-tune the ISO with customizations, restore removed components, or repair corrupted images. |
 | **BakuretsuClean\\** | Live OS debloater | Debloats an already-installed Windows system. Removes AppX packages, disables services, blocks telemetry, applies privacy tweaks. Includes revert support. | **After installing Windows** — debloat a live system without touching the ISO. |
 
 ### Recommended Workflow
@@ -220,7 +220,7 @@ Or choose "Yes" at the interactive prompt: *"Automatically bypass OOBE after ins
 | Scheduled tasks (optional) | Disables telemetry/bloat tasks | ~1 min |
 | WinSxS cleanup (optional) | Conservative bloat component cleanup | ~2-5 min |
 | Micro Mode stripping (optional) | WinRE, fonts, WU, deep WinSxS, Micro registry | ~5-10 min |
-| Ultra Micro stripping (optional) | Servicing backups, driver store, NGEN, MUI, manifests, manifests, CompactOS | ~10-20 min |
+| Ultra Micro stripping (optional) | Servicing backups, driver store, NGEN, MUI, manifests, CompactOS | ~10-20 min |
 | OOBE Bypass injection (optional) | SetupComplete.cmd + offline reg keys | <1 min |
 | Privacy tweaks | Cortana, location, activity, ads policies | <1 min |
 | Image cleanup | DISM component cleanup & compression | ~10-20 min |
@@ -405,7 +405,7 @@ LTSC (Long-Term Servicing Channel) editions are Microsoft's own debloated Window
 
 - Original script by [itsNileshHere](https://github.com/itsNileshHere/Windows-ISO-Debloater)
 - Enhanced by shirayukimikoto and fujiwarasayo
-- Inspired by KernelOS and Windows X-Lite stripped builds
+- Inspired by MSMG Toolkit, KernelOS, and Windows X-Lite stripped builds
 - [tiny11builder](https://github.com/ntdevlabs/tiny11builder) for inspiration
 - [Winaero](https://winaero.com/) for registry optimization techniques
 - [RemoveWindowsAI](https://github.com/zoicware/RemoveWindowsAI) for AI removal approach

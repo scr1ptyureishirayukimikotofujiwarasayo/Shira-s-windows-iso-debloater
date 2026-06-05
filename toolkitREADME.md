@@ -84,6 +84,7 @@ For XP customization, use **nLite** alongside this toolkit for extraction and IS
 | 8 | Inject files/scripts | Browse files → choose destination folder inside the mounted ISO |
 | 9 | Custom files merge | Puts everything from a `Custom` folder next to the script into the mounted image |
 | 10 | Create autounattend.xml | Generate unattended answer file with local account |
+| 11 | Import browser data | Copies cookies, saved logins, bookmarks, history, and autofill from host browser into ISO's Default user profile. Supports Chrome, Edge, Brave, Firefox, Opera, Vivaldi. Chromium passwords may not transfer (DPAPI-encrypted). |
 
 ---
 
@@ -101,6 +102,7 @@ For XP customization, use **nLite** alongside this toolkit for extraction and IS
 | 8 | Health check & repair | DISM CheckHealth → RestoreHealth with backup ISO source (Windows 8+ only) |
 | 9 | Repair with donor ISO | Browse a clean donor ISO → mount its WIM → use as repair source (Windows 8+ only) |
 | 10 | Restore features from donor | Browse a donor ISO → lists all enabled features with descriptions → pick which ones to add back (ideal for fixing stripped ISOs like Micro 10/11 or Tiny10/11) |
+| 11 | Recover WinRE from donor | Browse a donor ISO → copies Winre.wim, ReAgent.xml, and registry keys back into a stripped image. Requires same Windows version/edition. |
 
 ---
 
