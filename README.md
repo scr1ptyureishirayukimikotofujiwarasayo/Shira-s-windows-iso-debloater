@@ -1,125 +1,69 @@
-# Windows ISO Debloater (Enhanced)
+# Windows ISO Toolkit (All-in-One)
 
-An advanced PowerShell script that strips Windows ISOs to a level comparable to Windows X-Lite / KernelOS builds. Removes bloatware, disables telemetry, optimizes performance, and verifies ISO health — all before installation.
-
----
-
-## Which ISO Should You Use?
-
-| ISO Edition | Debloat Safety | Recommendation |
-|------------|---------------|---------------|
-| **Windows LTSC (IoT/Enterprise LTSC)** | Minimal impact | LTSC is already heavily debloated by Microsoft. Most removal options target components that don't exist in LTSC. See the LTSC section below for specific guidance. |
-| **Windows Enterprise** | Safe | Good for moderate debloating. Fewer consumer integrations than Pro. |
-| **Windows Pro / Pro for Workstations** | Moderate | Use conservative options. Skip `DefenderRemove`, `WinSxSCleanup`, and `TaskCleanup`. |
-| **Windows Home** | Risky | Home edition has tight consumer integrations. Only use `AppxRemove` and basic tweaks. Skip everything else. |
-
-### For Home/Pro ISOs — Debloat Live Instead
-
-If you want an aggressive debloat on a Home or Pro system, **install the stock ISO first**, then use **BakuretsuClean** to debloat the running OS. This avoids corrupting the installer and gives you a stable installation with the same result.
-
-```
-BakuretsuClean — live-OS debloater (included in the repo)
-Run: BakuretsuClean\RunDebloater.bat as Administrator
-Features: AppX removal, service disabling, telemetry blocking, privacy tweaks, revert support
-```
+Three tools in one repo for debloating, customizing, and repairing Windows ISOs — before AND after installation.
 
 ---
 
-## Recommended Settings by ISO Type
+## Toolkit Ecosystem
 
-### LTSC (IoT/Enterprise LTSC)
+| Tool | Type | What It Does | When to Use |
+|------|------|-------------|-------------|
+| **isoDebloaterScript.ps1** | ISO debloater | Strips bloat from a Windows ISO before installation. Removes AppX packages, features, Edge, AI, OneDrive, services, telemetry, and builds a debloated bootable ISO. | **Before installing Windows** — create a clean ISO to install from scratch. |
+| **rintechtoolkit\\isoToolkit.ps1** | ISO modding / repair toolkit | Menu-driven toolkit for integrating updates, drivers, .NET, registry tweaks, OEM branding, wallpapers, autounattend.xml, WIM operations, and repairing/restoring features and WinRE from a donor ISO. | **After debloating** — fine-tune the ISO with customizations, restore removed components, or repair corrupted images. |
+| **BakuretsuClean\\** | Live OS debloater | Debloats an already-installed Windows system. Removes AppX packages, disables services, blocks telemetry, applies privacy tweaks. Includes revert support. | **After installing Windows** — debloat a live system without touching the ISO. |
 
-**Important:** LTSC ISOs are already debloated by Microsoft — they ship without Store apps, Widgets, Copilot, AI components, Xbox, Bing, and most consumer features. Running aggressive removal options on LTSC will produce errors (e.g. "package not found", "feature not present"). This is **normal and expected** — the script is trying to remove components that don't exist in LTSC.
+### Recommended Workflow
 
-**Errors on LTSC do NOT mean something is wrong with your ISO or the script.** They are harmless "not found" skips because LTSC never had those components.
-
-#### Recommended for LTSC — skip these options entirely:
 ```
--AppxRemove no              # LTSC has almost no AppX bloat
--CapabilitiesRemove no      # LTSC already lacks most consumer features
--OnedriveRemove no          # OneDrive is not pre-installed on LTSC
--EDGERemove no              # Edge is optional / not always present
--AIRemove no                # Copilot, Recall, AI components don't exist on LTSC
--WidgetsRemove no           # Widgets are not included in LTSC
--DefenderRemove no          # Skip — Defender is one of the few things actually present
--TaskCleanup no             # Minimal telemetry tasks already
--WinSxSCleanup no           # LTSC is already lean
--ExtremeDebloat no          # Services it targets are often absent or already disabled
+1. isoDebloaterScript.ps1  →  Strip bloat from stock ISO, build debloated ISO
+2. rintechtoolkit\          →  Customize/repair the debloated ISO (drivers, wallpaper, WinRE recovery, etc.)
+3. Install the debloated ISO →  Test in VM or bare metal
+4. BakuretsuClean\          →  (Optional) Apply additional live debloat after installation
+5. Cleanup.bat              →  Clear all temp files, logs, backups, and output ISOs for a fresh start
 ```
-
-#### Options still useful on LTSC:
-```
--TPMBypass          yes     # Bypass hardware checks if needed
--UserFoldersEnable  yes     # Restore folder shortcuts on Windows 11
--DriverIntegrate    yes     # Integrate Intel VMD drivers if needed
--ESDConvert         yes     # Compress the ISO
--useOscdimg         yes     # Reliable ISO creation
--PerformanceTweaks  yes     # CPU/memory/network optimizations (always applicable)
--ServicesDisable    yes     # Some services may be present; errors are normal
--WinUpdateDisable   no      # Optional — LTSC only gets security updates; disabling may leave you vulnerable
-```
-
-### Pro (play it safe) — same as BakuretsuClean's non-aggressive approach
-```
--SafeMode
-```
-This removes AppX bloat only. Keeps Store, Calculator, Photos, Edge, Cortana, and system services intact. Safe for any edition.
-
-Or manually:
-```
--AppxRemove yes -CapabilitiesRemove yes -OnedriveRemove yes -EDGERemove yes
--AIRemove yes -ServicesDisable yes -PerformanceTweaks yes
--DefenderRemove no -WidgetsRemove no -WinUpdateDisable no
--ExtremeDebloat no -TaskCleanup no -WinSxSCleanup no
-```
-
-### Home (bare minimum)
-```
--AppxRemove yes
--CapabilitiesRemove no -OnedriveRemove no -EDGERemove no
--AIRemove no -DefenderRemove no -ServicesDisable no
--TaskCleanup no -WinSxSCleanup no
-Then: run BakuretsuClean after installation
-```
-
----
-
-## Debloating LTSC ISOs — What to Expect
-
-LTSC (Long-Term Servicing Channel) editions are Microsoft's own debloated Windows builds. They ship without:
-- Microsoft Store (and most Store-dependent apps)
-- Xbox, Gaming, Mixed Reality, and consumer entertainment apps
-- Copilot, Recall, and AI/cloud assistant components
-- Widgets, News, WebExperience, and consumer information feeds
-- Bing, Weather, Maps, and other search-dependent apps
-- Teams, Skype, and consumer communication integrations
-- Most telemetry and data collection tasks present in Home/Pro
-
-### Why You'll See Errors
-
-When you run the debloater on an LTSC ISO, many removal steps will report **"not found"** or **"failed"** because the script attempts to remove components that LTSC never included in the first place. These errors are:
-
-- **Harmless** — the script continues past them
-- **Normal** — expected behavior on already-lean ISOs
-- **Logged** — check `ErrorLogs\` for details if you want to confirm
-
-The final ISO will still be built successfully with whatever removals were possible.
-
-### Best Practice for LTSC
-
-Use the `-SafeMode` flag to only attempt benign removals, or run the script interactively and answer **"no"** to AppX removal, features removal, Edge, AI, Widgets, OneDrive, Defender, tasks, and WinSxS cleanup. Enable only the options that apply universally (TPM bypass, folder shortcuts, driver integration, compression, performance tweaks).
 
 ---
 
 ## Quick Start
 
+**ISO Debloater:**
 1. **Run PowerShell as Administrator**
 2. Execute: `.\isoDebloaterScript.ps1`
 3. Select your Windows ISO when prompted
 4. Answer the debloat options (press Enter for defaults)
 5. Wait for the debloated ISO to be created
 
+**ISO Toolkit (modding / repair):**
+1. Run: `.\rintechtoolkit\isoToolkit.ps1`
+2. Select `1. Source` → load an ISO
+3. Use `Integrate`, `Customize`, `Tools` menus to modify or repair the image
+4. `5. Save changes & unmount` → `6. Build ISO`
+
+**Live OS Debloater:**
+1. Run: `BakuretsuClean\RunDebloater.bat` as Administrator
+
+**Cleanup:** Run `Cleanup.bat` to wipe all work files, logs, temp dirs, backup ISOs, and output ISOs.
+
 **Minimum requirements:** Windows 10/11 host, 20GB free disk space, Administrator privileges.
+
+---
+
+## Cleanup
+
+After one or more debloat/modding sessions, leftover files accumulate:
+
+| Leftover | Source |
+|----------|--------|
+| `C:\WIDTemp\` | isoDebloaterScript.ps1 work directory |
+| `C:\ISOToolkit\` | isoToolkit.ps1 work directory |
+| `ISOBackup\` | Original ISO backups (~6 GB each) |
+| `ErrorLogs\` | Timestamped error logs from all tools |
+| `ADKDownload\` | Cached oscdimg / ADK downloads |
+| `*.iso` (output ISOs) | Debloated/custom output ISOs |
+| `*.log`, `*.txt` | Script/transcript logs |
+| `%TEMP%\toolkit_*.reg` | Temp registry import files |
+
+Run **`Cleanup.bat`** (as Administrator) from the toolkit folder to clear everything. It prompts before removing each ISO so you can keep ones you want. After cleanup, the toolkit folder returns to its initial state — ready for a fresh run.
 
 ---
 
@@ -272,8 +216,12 @@ Errors are categorized by source (DISM, AppX, Mount, Export, Health, etc.) for e
 | `-WinUpdateDisable` | yes/no | no |
 | `-HyperVRemove` | yes/no | no |
 | `-ExtremeDebloat` | yes/no | no |
+| `-MicroMode` | yes/no | no |
 | `-ServicesDisable` | yes/no | yes |
 | `-PerformanceTweaks` | yes/no | yes |
+| `-TaskCleanup` | yes/no | no |
+| `-WinSxSCleanup` | yes/no | no |
+| `-UseAutounattend` | yes/no | no |
 
 ---
 
@@ -282,56 +230,6 @@ Errors are categorized by source (DISM, AppX, Mount, Export, Health, etc.) for e
 - **Press `S`** during any looping operation (package removal, service disabling, scheduled tasks, WinSxS cleanup) to skip the remaining items in that section.
 - For DISM operations, the script has a 2-retry timeout mechanism. If a DISM command hangs, it auto-skips after the timeout.
 - If the script crashes mid-run leaving a mounted WIM: run `dism /unmount-image /mountdir:"C:\WIDTemp\mountdir\installWIM" /discard` before re-running.
-
----
-
-## Virtual Machine Testing & Troubleshooting Guide
-
-> **IMPORTANT:** The issues described below are caused by **improper VM configuration** and the **natural side effects of aggressive component stripping** — they are **NOT defects in the script or your debloated ISO.** Your ISO is almost certainly valid. Before opening an issue, verify you are not hitting one of these known scenarios.
-
----
-
-### 1. The Endless WinPE Pre-Install Loop (Hyper-V Generation 1)
-
-**Symptom:** After the installation progress bar reaches 100% and the VM reboots, it drops back into the initial *"Install Now"* setup screen endlessly.
-
-**Root Cause:** Hyper-V **Generation 1** virtual machines rely on IDE Controller emulation and blindly boot from the attached virtual CD/DVD ISO drive on every restart — ignoring the virtual hard disk where the OS was just installed. This is a Hyper-V Gen 1 design behavior, not an ISO corruption issue.
-
-**The Fix:**
-1. **Completely power off** the VM (do not just restart).
-2. Open **VM Settings → DVD Drive** → change the **Media** type to **"None"** (or unmount the ISO entirely).
-3. Apply changes and **start the VM cold**.
-4. **Alternatively:** Move the **Virtual Hard Disk** to the top of the boot priority list in the VM's BIOS/firmware settings, OR simply do **not** press any key when the *"Press any key to boot from CD..."* prompt flashes during reboot.
-
----
-
-### 2. The "Just a Moment" / OOBEREGION Loading Loop
-
-**Symptom:** After a successful installation, the system hangs indefinitely on the blue *"Just a moment..."* screen, or throws a fatal **OOBEREGION** setup interface error.
-
-**Root Cause:** This is actually a sign the debloater **worked perfectly.** Aggressive component stripping cleanly removes Microsoft's background consumer telemetry, web account integration, and regional tracking frameworks. The interactive OOBE wizard layer panics when its online service hooks are absent — it has **nothing to latch onto** for the default first-run experience. **This is not image corruption.**
-
-**The Fix:**
-1. Press **`Shift + F10`** (or **`Fn + Shift + F10`** on laptops) to open an administrative Command Prompt.
-2. Force-create a local user account:
-   ```
-   net user Admin01 /add
-   net localgroup Administrators Admin01 /add
-   ```
-3. Rewrite the setup boot flags to bypass the stuck OOBE wizard layer entirely:
-   ```
-   reg add "HKLM\SYSTEM\Setup" /v "OOBEInProgress" /t REG_DWORD /d 0 /f
-   reg add "HKLM\SYSTEM\Setup" /v "SetupType" /t REG_DWORD /d 0 /f
-   ```
-4. Issue a hard restart from the toolbar or type:
-   ```
-   shutdown /r /t 0
-   ```
-5. Upon reboot, Windows will **skip the OOBE entirely** and log directly into the ultra-lean desktop shell as **`Admin01`** with full administrator privileges.
-
----
-
-> **If you encountered either of these scenarios:** your debloated ISO is fine. These are known VM configuration quirks and expected outcomes of aggressive stripping — **please do not file a bug report for them.**
 
 ---
 
