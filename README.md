@@ -121,9 +121,11 @@ Everything in Tier 2, plus extreme disk space recovery. **Closes the ~10 GB gap 
 
 | Tier | Command | Use Case |
 |------|---------|----------|
-| **Standard** | `-SafeMode` or pick options manually | Safe for any edition (Home/Pro/Enterprise/LTSC). No OOBE issues. |
+| **Standard** | `-SafeMode` or pick options manually | Safe for any edition. No OOBE issues. |
 | **Micro** | `-MicroMode yes` | Maximum stripping with working desktop. Combine with `-OOBEBypass yes` to skip the broken OOBE. |
 | **Ultra Micro** | `-UltraMicroMode yes` | Closest to Micro 10/11 builds. Maximum free disk space. OOBEBypass auto-enabled. |
+
+> **LTSC users:** Skip the debloater entirely. Your ISO is already stripped by Microsoft. Use the [rintechtoolkit](rintechtoolkit/) instead to add drivers, wallpapers, OEM branding, registry tweaks, and more to your LTSC ISO.
 
 ---
 
@@ -251,8 +253,8 @@ Or choose "Yes" at the interactive prompt: *"Automatically bypass OOBE after ins
 # Custom selection
 .\isoDebloaterScript.ps1 -AppxRemove yes -CapabilitiesRemove yes -OnedriveRemove yes -EDGERemove yes -AIRemove yes -DefenderRemove yes -OOBEBypass yes
 
-# LTSC ISO — skip removals, apply only universal optimizations
-.\isoDebloaterScript.ps1 -AppxRemove no -CapabilitiesRemove no -OnedriveRemove no -EDGERemove no -AIRemove no -WidgetsRemove no -DefenderRemove no -ServicesDisable yes -PerformanceTweaks yes -TPMBypass yes -ESDConvert yes
+# LTSC ISO — service disabling and performance tweaks only (LTSC is already debloated)
+.\isoDebloaterScript.ps1 -ServicesDisable yes -PerformanceTweaks yes -TPMBypass yes -ESDConvert yes -isoPath "C:\LTSC.iso" -winEdition "Windows 10 Enterprise LTSC" -AppxRemove no -CapabilitiesRemove no -OnedriveRemove no -EDGERemove no -AIRemove no -WidgetsRemove no -DefenderRemove no
 ```
 
 ### All Parameters
@@ -328,18 +330,29 @@ Errors are categorized by source (DISM, AppX, Mount, Export, Health, etc.) for e
 
 **Any Windows edition can be debloated safely.** Earlier assumptions that Home/Pro editions were "risky" were based on misdiagnosed VM issues — the actual root cause of installation loops was **incorrect Hyper-V settings and poor OOBE management** (see [VM Troubleshooting](#virtual-machine-troubleshooting) above), not ISO corruption or edition incompatibility.
 
-### Best ISOs for Extreme Stripping (Micro / Ultra Micro)
+### Best ISOs for Debloating
 
-If your goal is maximum disk savings, **start with a leaner ISO** — you'll get faster results with fewer errors:
+If your goal is a clean, well-stripped ISO with predictable results, **start with a full-featured edition** — you get more control over exactly what gets removed:
 
-| Priority | ISO Edition | Why It's Better |
-|----------|------------|-----------------|
-| **1st** | **Windows LTSC (IoT/Enterprise LTSC)** | Already stripped by Microsoft. No Store apps, Widgets, Copilot, Xbox, Bing, or consumer features. Extreme stripping completes in ~20-30 min with almost zero "not found" errors. The ideal base for Micro 10/11-style builds. |
-| **2nd** | **Windows Enterprise** | Fewer consumer integrations than Pro/Home. Many AI, advertising, and telemetry components are reduced or absent. Moderate error count during stripping. |
-| **3rd** | **Windows Pro / Pro for Workstations** | Full consumer load. All removal targets will be present and need processing. Expect longer run times. |
-| **4th** | **Windows Home** | Heaviest consumer integrations. Works fine but takes the longest to strip and produces the most errors (all harmless). |
+| Priority | ISO Edition | Why |
+|----------|------------|-----|
+| **1st** | **Windows Pro / Pro for Workstations** | Full consumer load. All removal targets present and processed. Gives you the most control over what stays and what goes. Consistent, predictable results. |
+| **2nd** | **Windows Enterprise** | Fewer consumer integrations than Pro. Moderate error count during stripping, but fewer removal targets available for customization. |
+| **3rd** | **Windows Home** | Heaviest consumer integrations. Works fine but takes the longest to strip and produces the most errors (all harmless). |
+| **Not recommended** | **Windows LTSC (IoT/Enterprise LTSC)** | **Already stripped by Microsoft.** LTSC ships without Store apps, Widgets, Copilot, AI, Xbox, Bing, and most consumer features — these are the very things the debloater is designed to remove. Running the debloater on LTSC produces mountains of "not found" errors (because LTSC never had these components) and offers very little benefit. You're not debloating — you're just running DISM operations that find nothing to remove. **If you want a lean Windows install, just install LTSC as-is.** |
 
-**Key insight:** Starting with LTSC saves 15-30 minutes per debloat run vs starting with Home, because the script has nothing to remove for ~40% of its targets. On LTSC, the "errors" are just the script saying "this package doesn't exist here" — your ISO was already lean.
+**Key insight:** Debloating works best on full editions (Pro/Home) because you can selectively remove what you don't want. LTSC already removed everything — there's nothing left to debload. Running the debloater on LTSC is wasted time.
+
+### LTSC: Great for Modding, Terrible for Debloating
+
+LTSC editions serve two very different purposes depending on which tool you use:
+
+| Tool | Recommended for LTSC? | Why |
+|------|----------------------|-----|
+| **isoDebloaterScript.ps1** | **NO** — do not use | The debloater tries to strip AppX packages, features, and components that LTSC doesn't even have. Every removal operation produces errors. In testing, the debloater's mount operations repeatedly failed with `Error: 0xc1420127` ("already mounted") and `Error: 0xc1420117` ("could not be completely unmounted"), leaving the WIM in a broken state where EVERY subsequent DISM command returned "The specified image is invalid." The entire debloat run cascades into failure. |
+| **rintechtoolkit\isoToolkit.ps1** | **YES** — excellent base | The modding toolkit doesn't try to remove what's already gone. It adds things: drivers, updates, .NET, registry tweaks, OEM branding, wallpapers, autounattend.xml, WinRE recovery. LTSC is the ideal canvas for modding because you start clean and only add what you want. |
+
+**If you tried debloating an LTSC ISO and it failed:** That's expected. The debloater assumes a full consumer ISO with all the bloat present. On LTSC, the mount gets confused by the already-clean state, DISM reports errors trying to remove nonexistent packages, and the entire session falls apart. **Use LTSC for modding with the toolkit, not debloating with the debloater.**
 
 ### Multi-Pass Stripping (Double / Triple Strip)
 
@@ -364,7 +377,7 @@ Pass 3: isoDebloaterScript.ps1 -UltraMicroMode yes -isoPath "Pass2.iso" -outputI
 | **Clean daily-driver** | 1 pass | Standard tier (`-SafeMode` or custom options) |
 | **Maximum storage savings** | 2 passes | Both Micro tier (`-MicroMode yes -OOBEBypass yes`) |
 | **Micro 10/11 comparable** | 3 passes | 2x Micro + 1x Ultra Micro (final pass) |
-| **Absolute minimum footprint** | 3 passes on LTSC | 2x Micro + 1x Ultra Micro on an LTSC base |
+| **Absolute minimum footprint** | 3 passes on Pro/Enterprise | 2x Micro + 1x Ultra Micro on a full-featured edition base |
 
 **Note:** Multi-pass stripping only makes sense on Micro or Ultra Micro tiers. Standard-tier passes won't gain much from repetition since they don't touch WinSxS or the servicing stack.
 
@@ -398,17 +411,19 @@ Features: AppX removal, service disabling, telemetry blocking, privacy tweaks, r
 
 ## LTSC Guidance
 
-LTSC (Long-Term Servicing Channel) editions are Microsoft's own debloated Windows builds. They ship without Store apps, Widgets, Copilot, AI, Xbox, Bing, and most consumer features. Running aggressive removal options on LTSC will produce **"not found" / "failed" errors** — this is normal because the script tries to remove components LTSC never had.
+LTSC is already debloated by Microsoft — don't run the debloater on it. See [LTSC: Great for Modding, Terrible for Debloating](#ltsc-great-for-modding-terrible-for-debloating) above for details.
 
-**Recommended: skip these on LTSC**
+**Use LTSC with the rintechtoolkit** to add drivers, updates, wallpapers, OEM branding, registry tweaks, WinRE recovery, and autounattend.xml. LTSC is the perfect clean canvas for modding.
+
+If you must run the debloater on LTSC, skip every removal option — only service disabling, performance tweaks, and TPM bypass make sense:
+
 ```
 -AppxRemove no -CapabilitiesRemove no -OnedriveRemove no -EDGERemove no
 -AIRemove no -WidgetsRemove no -DefenderRemove no -TaskCleanup no -WinSxSCleanup no
 ```
 
-**Still useful on LTSC:**
 ```
--TPMBypass yes -UserFoldersEnable yes -DriverIntegrate yes -ESDConvert yes
+-TPMBypass yes -UserFoldersEnable yes -ESDConvert yes
 -useOscdimg yes -PerformanceTweaks yes -ServicesDisable yes
 ```
 
@@ -417,7 +432,7 @@ LTSC (Long-Term Servicing Channel) editions are Microsoft's own debloated Window
 ## Tips
 
 - **Understand the tiers** — Standard is safe for all editions. Micro breaks OOBE but produces a working desktop (use `-OOBEBypass yes`). Ultra Micro maximizes free space but removes more components.
-- **LTSC ISOs are already debloated** — errors during debloating are normal and harmless. Skip most removal options.
+- **LTSC ISOs are already debloated by Microsoft** — running the debloater on LTSC provides little to no benefit and will likely fail. Use the rintechtoolkit for modding LTSC instead. See [LTSC: Great for Modding, Terrible for Debloating](#ltsc-great-for-modding-terrible-for-debloating).
 - **Always test in a VM first** — before deploying a debloated ISO to real hardware, install it in Hyper-V or VMware to verify it boots and runs.
 - **Use a fast SSD** for the working directory — DISM operations are disk-intensive.
 - **Disable real-time AV** temporarily — some AV products interfere with DISM mounting operations.
