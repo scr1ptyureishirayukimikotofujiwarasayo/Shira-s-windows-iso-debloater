@@ -256,7 +256,7 @@ The toolkit uses `C:\ISOToolkit\` as its work directory. This folder can grow to
 
 ```
 # After you're done with all toolkit work:
-Run Cleanup.bat from the parent folder (windowsisodebloaterultrav2)
+Run Cleanup.bat from the project root folder
 
 # Or manually:
 rd /s /q C:\ISOToolkit

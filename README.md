@@ -28,9 +28,13 @@ Three tools in one repo for debloating, customizing, and repairing Windows ISOs 
 
 **ISO Debloater:**
 1. **Run PowerShell as Administrator**
-2. Execute: `.\isoDebloater.ps1` (or double-click `RunDebloaterSafe.bat` for safe mode)
+2. Execute: `.\isoDebloater.ps1` (or double-click `RunDebloaterSafe.bat`)
 3. Select your Windows ISO when prompted
-4. Answer the debloat options (press Enter for defaults)
+4. Choose a debloat mode from the menu:
+   - `[1] Safe` — AppX removal only, safe for any edition
+   - `[2] Aggressive` — all recommended options enabled
+   - `[3] Ultra Micro` — maximum stripping + extreme disk savings
+   - `[4] Manual` — pick each option individually with review screen
 5. Wait for the debloated ISO to be created
 
 **ISO Toolkit (modding / repair):**
@@ -48,13 +52,24 @@ Three tools in one repo for debloating, customizing, and repairing Windows ISOs 
 
 ---
 
-## Debloat Tiers
+## Debloat Modes
 
-The ISO debloater has **three tiers** of aggressiveness. Each tier includes everything from the one below it.
+When you run `isoDebloater.ps1`, you're greeted with a 4-option menu:
 
-### Tier 1: Standard (`-SafeMode` or select options individually)
+| Option | Mode | What it activates |
+|--------|------|-------------------|
+| **1. Safe Debloat** | AppX bloatware only | Removes packages, features, OneDrive, Edge, AI, Widgets. Disables services, applies privacy + performance tweaks. **Safe for any edition.** |
+| **2. Aggressive Debloat** | Safe + more | Everything in Safe, plus aggressive package targets (Print/Fax/Scan, VBScript, 32-bit support, Notepad, Paint, MediaPlayer). |
+| **3. Ultra Micro Mode** | Maximum stripping | Everything in Aggressive + WinRE removal, font stripping, Windows Update disable, Defender removal, Hyper-V removal, WinSxS deep cleanup, OOBE bypass. **Extreme disk savings.** |
+| **4. Manual** | Pick each option | Choose from 22 individual options. Includes back button, review screen, and toggle-any-option functionality. |
 
-The baseline. Removes AppX bloatware, optional features, OneDrive, Edge, AI components, and applies privacy/performance tweaks. **Safe for any Windows edition.**
+The modes are presets — selecting option 1-3 auto-sets all 22 flags to their recommended values. Option 4 lets you pick each one.
+
+### Tier Details
+
+### Tier 1 — Safe Debloat (menu option 1 or `-SafeMode`)
+
+The baseline.
 
 | Category | What's Removed |
 |----------|---------------|
@@ -73,9 +88,9 @@ The baseline. Removes AppX bloatware, optional features, OneDrive, Edge, AI comp
 
 ---
 
-### Tier 2: Micro (`-MicroMode yes`)
+### Tier 2 — Aggressive Debloat (menu option 2)
 
-Everything in Tier 1, plus aggressive stripping. **Comparable to Micro 10/11 builds.** Breaks OOBE (use `-OOBEBypass yes`). Auto-enables: ExtremeDebloat, DefenderRemove, WinUpdateDisable, HyperVRemove, TaskCleanup, WinSxSCleanup, TPMBypass.
+Everything in Tier 1, plus additional aggressive package targets. Adds removal of:
 
 | Category | What's Added Beyond Tier 1 |
 |----------|---------------------------|
@@ -94,9 +109,9 @@ Everything in Tier 1, plus aggressive stripping. **Comparable to Micro 10/11 bui
 
 ---
 
-### Tier 3: Ultra Micro (`-UltraMicroMode yes`)
+### Tier 3 — Ultra Micro Mode (menu option 3 or `-UltraMicroMode yes`)
 
-Everything in Tier 2, plus extreme disk space recovery. **Closes the ~10 GB gap with ultra-stripped Micro 10 builds (122 GB free on 126 GB disk).** Auto-enables MicroMode + OOBEBypass + everything.
+Everything in Tier 2, plus extreme disk space recovery. Auto-enables MicroMode + OOBEBypass.
 
 | Category | What's Added Beyond Tier 2 |
 |----------|---------------------------|
