@@ -1,0 +1,124 @@
+==========================================================
+  HOW TO USE THE WINDOWS ISO TOOLKIT
+==========================================================
+
+THREE TOOLS — THREE DIFFERENT JOBS:
+
+  1. isoDebloater.ps1       Strip bloat FROM an ISO before installing
+  2. rintechtoolkit\         Customize/repair an ISO after debloating
+  3. BakuretsuClean\         Debloat an ALREADY INSTALLED Windows system
+
+----------------------------------------------------------
+  QUICK COMPARISON
+----------------------------------------------------------
+                          When to use?              What it does
+  isoDebloater            BEFORE installing Windows    Makes a clean debloated ISO
+  rintechtoolkit          AFTER debloating             Customize, add drivers, repair
+  BakuretsuClean          AFTER installing Windows     Debloats your running PC
+
+----------------------------------------------------------
+  1. ISO DEBLOATER — strip Windows bloat from an ISO
+----------------------------------------------------------
+
+  WHAT: Creates a stripped-down Windows ISO with bloatware removed.
+  You install this debloated ISO like a normal Windows install.
+
+  HOW:
+    Option A (easy): Double-click RunDebloaterSafe.bat
+    Option B:  Open PowerShell as Administrator, run:
+               .\isoDebloater.ps1
+               Select your Windows ISO, answer the prompts.
+
+  TIERS (how aggressive):
+    Standard  — AppX removal only (safe for any edition)
+    Micro     — MAXIMUM stripping (removes WinRE, fonts, WU)
+    Ultra     — EXTREME disk savings (Driver store, NGEN, MUI)
+
+  COMMON COMMANDS:
+    .\isoDebloater.ps1 -SafeMode                          (safe, AppX only)
+    .\isoDebloater.ps1 -MicroMode yes -OOBEBypass yes     (aggressive)
+    .\isoDebloater.ps1 -isoPath "C:\Win11.iso" -winEdition "Windows 11 Pro" -outputISO "MyLiteISO" -noPrompt
+
+----------------------------------------------------------
+  2. RINTECHTOOLKIT — customize/repair a debloated ISO
+----------------------------------------------------------
+
+  WHAT: Menu-driven toolkit for adding drivers, integrating updates,
+  setting wallpapers, enabling features, repairing damage, changing
+  the look of Windows, and building the final ISO.
+
+  HOW:
+    .\rintechtoolkit\isoToolkit.ps1
+
+  MENUS:
+    1. Source     — Load your ISO
+    2. Integrate  — Add updates, drivers, .NET, registry files
+    3. Remove     — Remove AppX packages
+    4. Customize  — Wallpapers, themes, sounds, OEM branding,
+                    browser data import, look swapping from donor ISO,
+                    autounattend.xml generation
+    5. Save       — Commit changes to the WIM
+    6. Build ISO  — Create the final bootable ISO
+    7. Tools      — WIM info, repair with donor ISO, restore features,
+                    health check, WinRE recovery, export editions
+    8. Exit
+
+  TIP: Run the debloater on your ISO FIRST, then use the toolkit
+       to customize and repair what was stripped.
+
+----------------------------------------------------------
+  3. BAKURETSUCLEAN — debloat a running Windows system
+----------------------------------------------------------
+
+  WHAT: Removes bloat from your ALREADY INSTALLED Windows.
+  Does NOT touch an ISO — cleans the system you're actively running.
+
+  HOW:
+    Double-click BakuretsuClean\RunDebloater.bat
+    (Must be run as Administrator — it self-elevates)
+
+  WHAT IT DOES:
+    Removes AppX bloatware, disables telemetry services,
+    applies privacy tweaks, removes OneDrive junk,
+    disables Cortana, Edge PDF takeover, GameDVR, Xbox.
+
+  REVERT: The script includes a Revert-Changes function
+          if something breaks.
+
+----------------------------------------------------------
+  RECOMMENDED WORKFLOW (for making a custom Windows ISO)
+----------------------------------------------------------
+
+  1. isoDebloater.ps1             Strip bloat from stock ISO
+  2. rintechtoolkit\isoToolkit.ps1  Customize the debloated ISO
+  3. Install the ISO                (VM or real hardware)
+  4. (Optional) BakuretsuClean      Extra live debloating
+  5. Cleanup.bat                    Clear all work files
+
+----------------------------------------------------------
+  CLEANUP
+----------------------------------------------------------
+
+  Run Cleanup.bat to wipe ALL work files:
+    - Temp mount directories
+    - Logs and error reports
+    - Backup ISOs
+    - Output ISOs
+    - ADK downloads
+    - DISM scratch files
+
+----------------------------------------------------------
+  REQUIREMENTS
+----------------------------------------------------------
+
+  Windows 10/11 host, 20GB+ free disk space, Administrator
+  (A stock Windows ISO to work with — not included)
+
+----------------------------------------------------------
+  SUPPORT
+----------------------------------------------------------
+
+  Issues: https://github.com/.../issues
+  Full docs: README.md
+  Fix guide: docs\MAINTENANCE.md
+  AI help:   AGENTS.md
