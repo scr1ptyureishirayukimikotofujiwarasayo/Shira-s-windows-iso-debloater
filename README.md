@@ -8,14 +8,14 @@ Three tools in one repo for debloating, customizing, and repairing Windows ISOs 
 
 | Tool | Type | What It Does | When to Use |
 |------|------|-------------|-------------|
-| **isoDebloaterScript.ps1** | ISO debloater | Strips bloat from a Windows ISO before installation. Removes AppX packages, features, Edge, AI, OneDrive, services, telemetry, and builds a debloated bootable ISO. | **Before installing Windows** — create a clean ISO to install from scratch. |
+| **isoDebloater.ps1** | ISO debloater | Strips bloat from a Windows ISO before installation. Removes AppX packages, features, Edge, AI, OneDrive, services, telemetry, and builds a debloated bootable ISO. | **Before installing Windows** — create a clean ISO to install from scratch. |
 | **rintechtoolkit\\isoToolkit.ps1** | ISO modding / repair toolkit | Menu-driven toolkit for integrating updates, drivers, .NET, registry tweaks, OEM branding, wallpapers, autounattend.xml, browser data import, WIM operations, WinRE recovery, and repairing/restoring features from a donor ISO. | **After debloating** — fine-tune the ISO with customizations, restore removed components, or repair corrupted images. |
 | **BakuretsuClean\\** | Live OS debloater | Debloats an already-installed Windows system. Removes AppX packages, disables services, blocks telemetry, applies privacy tweaks. Includes revert support. | **After installing Windows** — debloat a live system without touching the ISO. |
 
 ### Recommended Workflow
 
 ```
-1. isoDebloaterScript.ps1  →  Strip bloat from stock ISO, build debloated ISO
+1. isoDebloater.ps1  →  Strip bloat from stock ISO, build debloated ISO
 2. rintechtoolkit\          →  Customize/repair the debloated ISO (drivers, wallpaper, WinRE recovery, etc.)
 3. Install the debloated ISO →  Test in VM or bare metal
 4. BakuretsuClean\          →  (Optional) Apply additional live debloat after installation
@@ -28,7 +28,7 @@ Three tools in one repo for debloating, customizing, and repairing Windows ISOs 
 
 **ISO Debloater:**
 1. **Run PowerShell as Administrator**
-2. Execute: `.\isoDebloaterScript.ps1`
+2. Execute: `.\isoDebloater.ps1` (or double-click `RunDebloaterSafe.bat` for safe mode)
 3. Select your Windows ISO when prompted
 4. Answer the debloat options (press Enter for defaults)
 5. Wait for the debloated ISO to be created
@@ -135,7 +135,7 @@ After one or more debloat/modding sessions, leftover files accumulate:
 
 | Leftover | Source |
 |----------|--------|
-| `C:\WIDTemp\` | isoDebloaterScript.ps1 work directory |
+| `C:\WIDTemp\` | isoDebloater.ps1 work directory |
 | `C:\ISOToolkit\` | isoToolkit.ps1 work directory |
 | `ISOBackup\` | Original ISO backups (~6 GB each) |
 | `ErrorLogs\` | Timestamped error logs from all tools |
@@ -197,7 +197,7 @@ Instead of fixing OOBE loops manually, you can have the debloater **inject an au
 
 **How to use:**
 ```
-.\isoDebloaterScript.ps1 -OOBEBypass yes
+.\isoDebloater.ps1 -OOBEBypass yes
 ```
 Or choose "Yes" at the interactive prompt: *"Automatically bypass OOBE after install?"*
 
@@ -239,22 +239,22 @@ Or choose "Yes" at the interactive prompt: *"Automatically bypass OOBE after ins
 
 ```powershell
 # Fully automated Standard debloat
-.\isoDebloaterScript.ps1 -noPrompt -isoPath "C:\Win11.iso" -winEdition "Windows 11 Pro" -outputISO "Win11Lite"
+.\isoDebloater.ps1 -noPrompt -isoPath "C:\Win11.iso" -winEdition "Windows 11 Pro" -outputISO "Win11Lite"
 
 # Micro mode — maximum stripping, OOBE bypass auto-injected
-.\isoDebloaterScript.ps1 -MicroMode yes -OOBEBypass yes -isoPath "C:\Win11.iso" -winEdition "Windows 11 Pro" -outputISO "Win11Micro"
+.\isoDebloater.ps1 -MicroMode yes -OOBEBypass yes -isoPath "C:\Win11.iso" -winEdition "Windows 11 Pro" -outputISO "Win11Micro"
 
 # Ultra Micro mode — extreme disk savings, everything auto-enabled
-.\isoDebloaterScript.ps1 -UltraMicroMode yes -isoPath "C:\Win11.iso" -winEdition "Windows 11 Pro" -outputISO "Win11UltraMicro"
+.\isoDebloater.ps1 -UltraMicroMode yes -isoPath "C:\Win11.iso" -winEdition "Windows 11 Pro" -outputISO "Win11UltraMicro"
 
 # Safe mode — remove only apps, keep everything else
-.\isoDebloaterScript.ps1 -SafeMode
+.\isoDebloater.ps1 -SafeMode
 
 # Custom selection
-.\isoDebloaterScript.ps1 -AppxRemove yes -CapabilitiesRemove yes -OnedriveRemove yes -EDGERemove yes -AIRemove yes -DefenderRemove yes -OOBEBypass yes
+.\isoDebloater.ps1 -AppxRemove yes -CapabilitiesRemove yes -OnedriveRemove yes -EDGERemove yes -AIRemove yes -DefenderRemove yes -OOBEBypass yes
 
 # LTSC ISO — service disabling and performance tweaks only (LTSC is already debloated)
-.\isoDebloaterScript.ps1 -ServicesDisable yes -PerformanceTweaks yes -TPMBypass yes -ESDConvert yes -isoPath "C:\LTSC.iso" -winEdition "Windows 10 Enterprise LTSC" -AppxRemove no -CapabilitiesRemove no -OnedriveRemove no -EDGERemove no -AIRemove no -WidgetsRemove no -DefenderRemove no
+.\isoDebloater.ps1 -ServicesDisable yes -PerformanceTweaks yes -TPMBypass yes -ESDConvert yes -isoPath "C:\LTSC.iso" -winEdition "Windows 10 Enterprise LTSC" -AppxRemove no -CapabilitiesRemove no -OnedriveRemove no -EDGERemove no -AIRemove no -WidgetsRemove no -DefenderRemove no
 ```
 
 ### All Parameters
@@ -349,7 +349,7 @@ LTSC editions serve two very different purposes depending on which tool you use:
 
 | Tool | Recommended for LTSC? | Why |
 |------|----------------------|-----|
-| **isoDebloaterScript.ps1** | **NO** — do not use | The debloater tries to strip AppX packages, features, and components that LTSC doesn't even have. Every removal operation produces errors. In testing, the debloater's mount operations repeatedly failed with `Error: 0xc1420127` ("already mounted") and `Error: 0xc1420117` ("could not be completely unmounted"), leaving the WIM in a broken state where EVERY subsequent DISM command returned "The specified image is invalid." The entire debloat run cascades into failure. |
+| **isoDebloater.ps1** | **NO** — do not use | The debloater tries to strip AppX packages, features, and components that LTSC doesn't even have. Every removal operation produces errors. In testing, the debloater's mount operations repeatedly failed with `Error: 0xc1420127` ("already mounted") and `Error: 0xc1420117` ("could not be completely unmounted"), leaving the WIM in a broken state where EVERY subsequent DISM command returned "The specified image is invalid." The entire debloat run cascades into failure. |
 | **rintechtoolkit\isoToolkit.ps1** | **YES** — excellent base | The modding toolkit doesn't try to remove what's already gone. It adds things: drivers, updates, .NET, registry tweaks, OEM branding, wallpapers, autounattend.xml, WinRE recovery. LTSC is the ideal canvas for modding because you start clean and only add what you want. |
 
 **If you tried debloating an LTSC ISO and it failed:** That's expected. The debloater assumes a full consumer ISO with all the bloat present. On LTSC, the mount gets confused by the already-clean state, DISM reports errors trying to remove nonexistent packages, and the entire session falls apart. **Use LTSC for modding with the toolkit, not debloating with the debloater.**
@@ -359,9 +359,9 @@ LTSC editions serve two very different purposes depending on which tool you use:
 Instead of running one massive debloat session, you can **run the debloater multiple times on the same ISO.** Each pass catches components the previous pass exposed or missed:
 
 ```
-Pass 1: isoDebloaterScript.ps1 -MicroMode yes -OOBEBypass yes -isoPath "stock.iso" -outputISO "Pass1"
-Pass 2: isoDebloaterScript.ps1 -MicroMode yes -OOBEBypass yes -isoPath "Pass1.iso" -outputISO "Pass2"  
-Pass 3: isoDebloaterScript.ps1 -UltraMicroMode yes -isoPath "Pass2.iso" -outputISO "Final"
+Pass 1: isoDebloater.ps1 -MicroMode yes -OOBEBypass yes -isoPath "stock.iso" -outputISO "Pass1"
+Pass 2: isoDebloater.ps1 -MicroMode yes -OOBEBypass yes -isoPath "Pass1.iso" -outputISO "Pass2"  
+Pass 3: isoDebloater.ps1 -UltraMicroMode yes -isoPath "Pass2.iso" -outputISO "Final"
 ```
 
 **Why this works:**
