@@ -127,8 +127,8 @@ Everything in Tier 2, plus extreme disk space recovery. Auto-enables MicroMode +
 | **Visual resources** | All wallpapers, themes, 4K wallpapers, screen images deleted. Cursors are intentionally kept (invisible mouse pointer otherwise). (~100–200 MB) |
 | **Migration data** | `System32\migration`, `migwiz`, `oobe\migrate` files stripped. `Sysprep` is intentionally NOT touched (required for Windows Setup's "Getting Windows Ready" phase). (~100–300 MB) |
 | **Reserved storage** | All ReserveManager registry keys zeroed; RunOnce fires `compact /compactos:always` on first boot (~7 GB live savings) |
-| **Ultra WinSxS** | 40+ bloat component patterns: winsat, migration, upgrade, compatibility, remotedesktop, DVD, bluray, media, location, wallet, parentalcontrols, family, easeofaccess, windowstogo, spelling, dictation, speech, language, handwriting, OCR, SNMP, telnet, TFTP, RIP, LPD, LPR. **Servicing, RPC, IPC, disk, and driver patterns are permanently excluded** to prevent boot failures and CBS corruption. (~500 MB–2 GB) |
-| **Ultra registry + RunOnce** | System restore disable, prefetch/superfetch disable, CompactOS /resetbase run-once, WinSxS Backup/ManifestCache strip on live system |
+| **Ultra WinSxS** | **Live-phase cleanup** — a PowerShell script is injected into the ISO and fires on first login via RunOnce. It runs `dism /online /resetbase` to reconcile CBS, then deletes 34+ bloat WinSxS component directories, then runs CompactOS and reboots. Because CBS is alive and running, it absorbs the deletions without leaving orphaned entries. This is the same technique used by Micro 10/11 and X-Lite. (~500 MB–2 GB) |
+| **Ultra registry** | System restore disable, prefetch/superfetch disable, WinSxS Backup/ManifestCache strip on live system |
 | **Additional AppX** | Cortana. Search is intentionally kept (Start Menu, file search, and Outlook search all depend on it). |
 | **Additional packages** | IE, StepsRecorder, QuickAssist, PowerShell ISE, printing PMCPPC/WFS, XPS Viewer, ADAM client |
 
@@ -136,7 +136,7 @@ Everything in Tier 2, plus extreme disk space recovery. Auto-enables MicroMode +
 
 **This CANNOT achieve Micro 10/11 numbers (~122 GB free).** Those builds delete CBS core manifests, permanently bricking DISM and Windows Update. This tool preserves the servicing stack so the OS remains updatable.
 
-**Known limitation:** WinSxS directory deletions leave orphaned CBS registry entries. `DISM /CheckHealth` and `SFC /scannow` will report errors. Some cumulative updates may fail for components whose WinSxS directories were deleted. Test thoroughly in a VM before deploying to real hardware.
+**Architecture:** WinSxS deletions are performed **live** during first login (not offline in the mounted WIM). A cleanup script injected into the ISO runs `dism /online /resetbase` first, telling CBS to reconcile, then deletes component directories, then runs CompactOS, then reboots. Because CBS is alive during the deletions, no orphaned references remain. This is how Micro 10/11, X-Lite, and KernelOS achieve their results without bricking the install.
 
 ---
 
@@ -246,7 +246,7 @@ Or choose "Yes" at the interactive prompt: *"Automatically bypass OOBE after ins
 | Scheduled tasks (optional) | Disables telemetry/bloat tasks | ~1 min |
 | WinSxS cleanup (optional) | Conservative bloat component cleanup | ~2-5 min |
 | Micro Mode stripping (optional) | WinRE, fonts, WU, deep WinSxS, Micro registry | ~5-10 min |
-| Ultra Micro stripping (optional) | Servicing backups, driver store, NGEN, MUI, WinSxS, CompactOS | ~10-20 min |
+| Ultra Micro stripping (optional) | Servicing backups, driver store, NGEN, MUI, registry, + injects live cleanup script | ~5-10 min |
 | OOBE Bypass injection (optional) | SetupComplete.cmd + offline reg keys | <1 min |
 | Privacy tweaks | Cortana, location, activity, ads policies | <1 min |
 | Image cleanup | DISM component cleanup & compression | ~10-20 min |
@@ -256,7 +256,8 @@ Or choose "Yes" at the interactive prompt: *"Automatically bypass OOBE after ins
 | **Total (Safe)** | | **~15-25 min** |
 | **Total (Aggressive)** | | **~25-50 min** |
 | **Total (Micro)** | | **~35-65 min** |
-| **Total (Ultra Micro)** | | **~50-90 min** |
+| **Total (Ultra Micro)** | | **~45-80 min** |
+| **+ Live cleanup on first boot** | WinSxS deletions, /resetbase, CompactOS, reboot | **~10-20 min on target machine** |
 
 ---
 
