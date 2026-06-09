@@ -58,18 +58,22 @@ When you run `isoDebloater.ps1`, you're greeted with a 4-option menu:
 
 | Option | Mode | What it activates |
 |--------|------|-------------------|
-| **1. Safe Debloat** | AppX bloatware only | Removes packages, features, OneDrive, Edge, AI, Widgets. Disables services, applies privacy + performance tweaks. **Safe for any edition.** |
-| **2. Aggressive Debloat** | Safe + more | Everything in Safe, plus aggressive package targets (Print/Fax/Scan, VBScript, 32-bit support, Notepad, Paint, MediaPlayer). |
-| **3. Ultra Micro Mode** | Maximum stripping | Everything in Aggressive + WinRE removal, font stripping, Windows Update disable, Defender removal, Hyper-V removal, WinSxS deep cleanup, OOBE bypass. **Extreme disk savings.** |
+| **1. Safe Debloat** | AppX removal only | Removes AppX bloatware packages only. No services, registry, or file system changes. **Safe for any edition.** |
+| **2. Aggressive Debloat** | Recommended daily-driver | AppX + capabilities + OneDrive + Edge + AI + Widgets removal. Disables 40+ services, applies privacy + performance tweaks. Keeps Defender, Windows Update, printing, Bluetooth. |
+| **3. Ultra Micro Mode [EXPERIMENTAL]** | Maximum stripping | Everything in Aggressive + Defender removal + WinRE removal + font stripping + Windows Update disable + Hyper-V removal + WinSxS deep cleanup + OOBE bypass. **CBS partially broken — Windows Update and DISM may fail. Test in a VM first.** |
 | **4. Manual** | Pick each option | Choose from 22 individual options. Includes back button, review screen, and toggle-any-option functionality. |
 
 The modes are presets — selecting option 1-3 auto-sets all 22 flags to their recommended values. Option 4 lets you pick each one.
 
 ### Tier Details
 
-### Tier 1 — Safe Debloat (menu option 1 or `-SafeMode`)
+**Safe mode (menu option 1 or `-SafeMode`):** AppX package removal only. No registry, file system, or service changes. ~20 GB free on a 126 GB disk. Safe for ALL editions including Home. Do not expect a "lite" OS — this is just bloatware removal.
 
-The baseline.
+---
+
+### Tier 1 — Aggressive Debloat (menu option 2)
+
+The recommended daily-driver preset.
 
 | Category | What's Removed |
 |----------|---------------|
@@ -88,9 +92,9 @@ The baseline.
 
 ---
 
-### Tier 2 — Aggressive Debloat (menu option 2)
+### Tier 2 — Micro Mode (`-MicroMode yes`)
 
-Everything in Tier 1, plus additional aggressive package targets. Adds removal of:
+Activated via the `-MicroMode yes` CLI flag, or auto-enabled when selecting Ultra Micro from the menu (option 3). Everything in Tier 1, plus:
 
 | Category | What's Added Beyond Tier 1 |
 |----------|---------------------------|
@@ -109,26 +113,30 @@ Everything in Tier 1, plus additional aggressive package targets. Adds removal o
 
 ---
 
-### Tier 3 — Ultra Micro Mode (menu option 3 or `-UltraMicroMode yes`)
+### Tier 3 — Ultra Micro Mode [EXPERIMENTAL] (menu option 3 or `-UltraMicroMode yes`)
 
 Everything in Tier 2, plus extreme disk space recovery. Auto-enables MicroMode + OOBEBypass.
 
 | Category | What's Added Beyond Tier 2 |
 |----------|---------------------------|
 | **Servicing stack backups** | Entire `WinSxS\Backup\` directory stripped (~1–3 GB) |
-| **Servicing manifests** | 60+ bloat component manifests deleted from `WinSxS\Manifests\` — defender, edge, xbox, skype, hyperv, print, fax, scanner, and more (~500 MB–1 GB) |
-| **Driver store** | Non-critical drivers stripped: printer, scanner, fax, modem, bluetooth, wifi, wwan, sensor, camera, biometric, smartcard, NFC, touch, pen, tablet, audio, media, DRM, display, battery, thermal (~500 MB–2 GB) |
-| **NGEN cache** | Pre-compiled .NET assemblies removed from `assembly\NativeImages*` and `Microsoft.NET\assembly\GAC_MSIL`; .NET will JIT on first run (~300–500 MB) |
+| **Servicing manifests** | **Intentionally NOT stripped** — deleting manifests permanently bricks CBS, making DISM and Windows Update unusable. This is what separates this tool from "frozen snapshot" builds like Micro 10/11. |
+| **Driver store** | Non-critical drivers stripped: printer, scanner, fax, modem, bluetooth, wifi, wwan, sensor, camera, biometric, smartcard, NFC, touch, pen, tablet, audio, media, DRM. Display, monitor, and graphics drivers are safelist-protected to prevent black screen on first boot. Skipped on LTSC. (~500 MB–2 GB) |
+| **NGEN cache** | Pre-compiled .NET assemblies removed from `assembly\NativeImages*` and `Framework*\NativeImages*`. GAC (Global Assembly Cache) is intentionally NOT touched — deleting it breaks ALL .NET Framework applications. .NET will JIT on first run (~300–500 MB) |
 | **Language MUI files** | All `xx-XX` directories in `System32` and `SysWOW64` removed except the detected language (~300 MB–1 GB) |
-| **Visual resources** | All wallpapers, themes, cursors, 4K wallpapers, screen images deleted (~100–200 MB) |
-| **Migration data** | `System32\migration`, `migwiz`, `oobe\migrate`, `Sysprep` files stripped (~100–300 MB) |
+| **Visual resources** | All wallpapers, themes, 4K wallpapers, screen images deleted. Cursors are intentionally kept (invisible mouse pointer otherwise). (~100–200 MB) |
+| **Migration data** | `System32\migration`, `migwiz`, `oobe\migrate` files stripped. `Sysprep` is intentionally NOT touched (required for Windows Setup's "Getting Windows Ready" phase). (~100–300 MB) |
 | **Reserved storage** | All ReserveManager registry keys zeroed; RunOnce fires `compact /compactos:always` on first boot (~7 GB live savings) |
-| **Ultra WinSxS** | 50 additional broad patterns: servicing, winsat, migration, upgrade, compatibility, driver, remotedesktop, DVD, bluray, media, location, wallet, parentalcontrols, family, easeofaccess, windowstogo, spelling, dictation, networking, SNMP, telnet, TFTP, RIP, LPD, LPR, IPC, RPC (~500 MB–2 GB) |
-| **Ultra registry + RunOnce** | System restore disable, prefetch/superfetch disable, pagefile disable, dism /resetbase run-once, WinSxS Backup/ManifestCache strip on live system |
-| **Additional AppX** | Cortana, Search, Apprep.ChxApp, ECApp |
+| **Ultra WinSxS** | 40+ bloat component patterns: winsat, migration, upgrade, compatibility, remotedesktop, DVD, bluray, media, location, wallet, parentalcontrols, family, easeofaccess, windowstogo, spelling, dictation, speech, language, handwriting, OCR, SNMP, telnet, TFTP, RIP, LPD, LPR. **Servicing, RPC, IPC, disk, and driver patterns are permanently excluded** to prevent boot failures and CBS corruption. (~500 MB–2 GB) |
+| **Ultra registry + RunOnce** | System restore disable, prefetch/superfetch disable, CompactOS /resetbase run-once, WinSxS Backup/ManifestCache strip on live system |
+| **Additional AppX** | Cortana. Search is intentionally kept (Start Menu, file search, and Outlook search all depend on it). |
 | **Additional packages** | IE, StepsRecorder, QuickAssist, PowerShell ISE, printing PMCPPC/WFS, XPS Viewer, ADAM client |
 
-**Approximate footprint:** ~2–4 GB used on a 126 GB disk (~122 GB free).
+**Approximate footprint:** ~30–50 GB free on a 126 GB disk (varies heavily by edition, build, and driver/component selection).
+
+**This CANNOT achieve Micro 10/11 numbers (~122 GB free).** Those builds delete CBS core manifests, permanently bricking DISM and Windows Update. This tool preserves the servicing stack so the OS remains updatable.
+
+**Known limitation:** WinSxS directory deletions leave orphaned CBS registry entries. `DISM /CheckHealth` and `SFC /scannow` will report errors. Some cumulative updates may fail for components whose WinSxS directories were deleted. Test thoroughly in a VM before deploying to real hardware.
 
 ---
 
@@ -136,9 +144,10 @@ Everything in Tier 2, plus extreme disk space recovery. Auto-enables MicroMode +
 
 | Tier | Command | Use Case |
 |------|---------|----------|
-| **Standard** | `-SafeMode` or pick options manually | Safe for any edition. No OOBE issues. |
-| **Micro** | `-MicroMode yes` | Maximum stripping with working desktop. Combine with `-OOBEBypass yes` to skip the broken OOBE. |
-| **Ultra Micro** | `-UltraMicroMode yes` | Closest to Micro 10/11 builds. Maximum free disk space. OOBEBypass auto-enabled. |
+| **Safe** | `-SafeMode` | AppX removal only. Safe for any edition, no side effects. |
+| **Aggressive** | Menu option 2 or pick options manually | Daily-driver debloat. Keeps Defender + WU + printing + Bluetooth working. |
+| **Micro** | `-MicroMode yes` | Maximum stripping with serviceable OS. Combine with `-OOBEBypass yes`. |
+| **Ultra Micro [EXP]** | `-UltraMicroMode yes` | Extreme disk savings at the cost of CBS integrity. Test in VM first. Will NOT match Micro 10/11 results. |
 
 > **LTSC users:** Skip the debloater entirely. Your ISO is already stripped by Microsoft. Use the [rintechtoolkit](rintechtoolkit/) instead to add drivers, wallpapers, OEM branding, registry tweaks, and more to your LTSC ISO.
 
@@ -237,14 +246,15 @@ Or choose "Yes" at the interactive prompt: *"Automatically bypass OOBE after ins
 | Scheduled tasks (optional) | Disables telemetry/bloat tasks | ~1 min |
 | WinSxS cleanup (optional) | Conservative bloat component cleanup | ~2-5 min |
 | Micro Mode stripping (optional) | WinRE, fonts, WU, deep WinSxS, Micro registry | ~5-10 min |
-| Ultra Micro stripping (optional) | Servicing backups, driver store, NGEN, MUI, manifests, CompactOS | ~10-20 min |
+| Ultra Micro stripping (optional) | Servicing backups, driver store, NGEN, MUI, WinSxS, CompactOS | ~10-20 min |
 | OOBE Bypass injection (optional) | SetupComplete.cmd + offline reg keys | <1 min |
 | Privacy tweaks | Cortana, location, activity, ads policies | <1 min |
 | Image cleanup | DISM component cleanup & compression | ~10-20 min |
 | Health check & repair | Checks & repairs component store | ~2-5 min |
 | Export WIM | Compresses modified image | ~5-20 min |
 | ISO creation | Builds bootable ISO with oscdimg | ~2-5 min |
-| **Total (Standard)** | | **~25-50 min** |
+| **Total (Safe)** | | **~15-25 min** |
+| **Total (Aggressive)** | | **~25-50 min** |
 | **Total (Micro)** | | **~35-65 min** |
 | **Total (Ultra Micro)** | | **~50-90 min** |
 
@@ -389,10 +399,10 @@ Pass 3: isoDebloater.ps1 -UltraMicroMode yes -isoPath "Pass2.iso" -outputISO "Fi
 
 | Goal | Passes | Settings |
 |------|--------|----------|
-| **Clean daily-driver** | 1 pass | Standard tier (`-SafeMode` or custom options) |
+| **Clean daily-driver** | 1 pass | Aggressive tier (menu option 2 or custom options) |
 | **Maximum storage savings** | 2 passes | Both Micro tier (`-MicroMode yes -OOBEBypass yes`) |
-| **Micro 10/11 comparable** | 3 passes | 2x Micro + 1x Ultra Micro (final pass) |
-| **Absolute minimum footprint** | 3 passes on Pro/Enterprise | 2x Micro + 1x Ultra Micro on a full-featured edition base |
+| **Extreme savings** | 3 passes | 2x Micro + 1x Ultra Micro (final pass). **Will NOT match Micro 10/11.** |
+| **Absolute minimum footprint** | 3 passes on Pro/Enterprise | 2x Micro + 1x Ultra Micro on a full-featured edition base. Expect ~30-40 GB free. |
 
 **Note:** Multi-pass stripping only makes sense on Micro or Ultra Micro tiers. Standard-tier passes won't gain much from repetition since they don't touch WinSxS or the servicing stack.
 
@@ -411,9 +421,10 @@ Home and Pro editions respond identically to debloating. Choose the tier that ma
 
 | Tier | Command | Result |
 |------|---------|--------|
-| **Standard** | `-SafeMode` or pick options | Clean ISO, OOBE works normally. ~18 GB free. |
+| **Safe** | `-SafeMode` | AppX packages removed only. ~20-25 GB free. |
+| **Aggressive** | Menu option 2 or custom options | Daily-driver debloat. OOBE works normally. ~18-22 GB free. |
 | **Micro** | `-MicroMode yes -OOBEBypass yes` | Heavily stripped, OOBE skipped, auto-logon. ~8-12 GB free. |
-| **Ultra Micro** | `-UltraMicroMode yes` | Maximum stripping, everything auto-enabled. ~122 GB free. |
+| **Ultra Micro [EXP]** | `-UltraMicroMode yes` | Maximum stripping, everything auto-enabled. ~30-50 GB free. CBS partially degraded. |
 
 Or if you prefer to debloat a live system instead of the ISO:
 ```
@@ -446,7 +457,7 @@ If you must run the debloater on LTSC, skip every removal option — only servic
 
 ## Tips
 
-- **Understand the tiers** — Standard is safe for all editions. Micro breaks OOBE but produces a working desktop (use `-OOBEBypass yes`). Ultra Micro maximizes free space but removes more components.
+- **Understand the tiers** — Safe removes only AppX packages. Aggressive is the recommended daily-driver preset. Micro breaks OOBE but produces a working desktop (use `-OOBEBypass yes`). Ultra Micro is EXPERIMENTAL — CBS partially degraded, test in VM first, will NOT match Micro 10/11 space savings.
 - **LTSC ISOs are already debloated by Microsoft** — running the debloater on LTSC provides little to no benefit and will likely fail. Use the rintechtoolkit for modding LTSC instead. See [LTSC: Great for Modding, Terrible for Debloating](#ltsc-great-for-modding-terrible-for-debloating).
 - **Always test in a VM first** — before deploying a debloated ISO to real hardware, install it in Hyper-V or VMware to verify it boots and runs.
 - **Use a fast SSD** for the working directory — DISM operations are disk-intensive.
