@@ -30,13 +30,17 @@ THREE TOOLS — THREE DIFFERENT JOBS:
                Select your Windows ISO, answer the prompts.
 
   TIERS (how aggressive):
-    Standard  — AppX removal only (safe for any edition)
-    Micro     — MAXIMUM stripping (removes WinRE, fonts, WU)
-    Ultra     — EXTREME disk savings (Driver store, NGEN, MUI)
+    Safe        — AppX removal only (default / interactive; safe for any edition)
+    Aggressive  — daily-driver strip via CLI flags; keeps Defender, WU,
+                  printing, Bluetooth working
+    Micro       — MAXIMUM stripping with a serviceable OS (disables WU,
+                  deep WinSxS, Micro registry). WinRE is disabled but
+                  Winre.wim is kept, and fonts are kept intact.
 
   COMMON COMMANDS:
     .\isoDebloater.ps1 -SafeMode                          (safe, AppX only)
-    .\isoDebloater.ps1 -MicroMode yes -OOBEBypass yes     (aggressive)
+    .\isoDebloater.ps1 -AppxRemove yes -CapabilitiesRemove yes -OnedriveRemove yes -EDGERemove yes -AIRemove yes -ServicesDisable yes -PerformanceTweaks yes   (aggressive)
+    .\isoDebloater.ps1 -MicroMode yes -OOBEBypass yes     (micro / maximum strip)
     .\isoDebloater.ps1 -isoPath "C:\Win11.iso" -winEdition "Windows 11 Pro" -outputISO "MyLiteISO" -noPrompt
 
 ----------------------------------------------------------
@@ -51,20 +55,29 @@ THREE TOOLS — THREE DIFFERENT JOBS:
     .\rintechtoolkit\isoToolkit.ps1
 
   MENUS:
-    1. Source     — Load your ISO
-    2. Integrate  — Add updates, drivers, .NET, registry files
-    3. Remove     — Remove AppX packages
+    1. Source     — Load your ISO (mounts the WIM automatically)
+    2. Integrate  — Add updates, drivers, .NET, registry files, features
+    3. Remove     — Remove AppX / component packages
     4. Customize  — Wallpapers, themes, sounds, OEM branding,
-                    browser data import, look swapping from donor ISO,
+                    browser data import, bundle a browser installer,
+                    system tweaks / services / scheduled tasks,
+                    look swapping + themed editions from a donor ISO,
                     autounattend.xml generation
-    5. Save       — Commit changes to the WIM
-    6. Build ISO  — Create the final bootable ISO
-    7. Tools      — WIM info, repair with donor ISO, restore features,
+    5. Build ISO  — Commits your changes (auto-save) AND builds the
+                    final bootable ISO in one step (no separate Save menu)
+    6. Tools      — WIM info, repair with donor ISO, restore features,
                     health check, WinRE recovery, export editions
-    8. Exit
+    7. Exit       — Warns if an image is still mounted with unsaved changes
 
   TIP: Run the debloater on your ISO FIRST, then use the toolkit
        to customize and repair what was stripped.
+
+  TIP: To verify customizations (browser, wallpaper, tweaks), INSTALL
+       the ISO in a VM. They live inside install.wim and only appear
+       after installation — not by just mounting the .iso file.
+
+  CLEANUP: rintechtoolkit has its own cleanup.bat (clears just its
+           logs, mounts, work folders, and oscdimg cache).
 
 ----------------------------------------------------------
   3. BAKURETSUCLEAN — debloat a running Windows system

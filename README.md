@@ -9,7 +9,7 @@ Three tools in one repo for debloating, customizing, and repairing Windows ISOs 
 | Tool | Type | What It Does | When to Use |
 |------|------|-------------|-------------|
 | **isoDebloater.ps1** | ISO debloater | Strips bloat from a Windows ISO before installation. Removes AppX packages, features, Edge, AI, OneDrive, services, telemetry, and builds a debloated bootable ISO. | **Before installing Windows** — create a clean ISO to install from scratch. |
-| **rintechtoolkit\\isoToolkit.ps1** | ISO modding / repair toolkit | Menu-driven toolkit for integrating updates, drivers, .NET, registry tweaks, OEM branding, wallpapers, autounattend.xml, browser data import, WIM operations, WinRE recovery, and repairing/restoring features from a donor ISO. | **After debloating** — fine-tune the ISO with customizations, restore removed components, or repair corrupted images. |
+| **rintechtoolkit\\isoToolkit.ps1** | ISO modding / repair toolkit | Menu-driven toolkit for integrating updates, drivers, .NET, registry tweaks, OEM branding, wallpapers, system tweaks/services/scheduled tasks, autounattend.xml, browser data import, **bundling a browser installer**, **themed editions** (make one Windows version look like another at first boot), WIM operations, WinRE recovery, and repairing/restoring features from a donor ISO. | **After debloating** — fine-tune the ISO with customizations, restore removed components, or repair corrupted images. |
 | **BakuretsuClean\\** | Live OS debloater | Debloats an already-installed Windows system. Removes AppX packages, disables services, blocks telemetry, applies privacy tweaks. Includes revert support. | **After installing Windows** — debloat a live system without touching the ISO. |
 
 ### Recommended Workflow
@@ -39,9 +39,11 @@ Three tools in one repo for debloating, customizing, and repairing Windows ISOs 
 
 **ISO Toolkit (modding / repair):**
 1. Run: `.\rintechtoolkit\isoToolkit.ps1`
-2. Select `1. Source` → load an ISO
+2. Select `1. Source` → load an ISO (it mounts automatically)
 3. Use `Integrate`, `Customize`, `Tools` menus to modify or repair the image
-4. `5. Save changes & unmount` → `6. Build ISO`
+4. `5. Build ISO` → commits your changes and builds the bootable ISO in one step (no separate Save step)
+
+> The toolkit has its own `rintechtoolkit\cleanup.bat` for clearing just its logs/mounts/work folders. See `rintechtoolkit\toolkitREADME.md` and `rintechtoolkit\USAGE.md` for full details.
 
 **Live OS Debloater:**
 1. Run: `BakuretsuClean\RunDebloater.bat` as Administrator
