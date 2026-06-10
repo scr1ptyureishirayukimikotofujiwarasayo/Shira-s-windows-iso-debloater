@@ -6,12 +6,13 @@ A menu-driven PowerShell toolkit for servicing Windows ISOs — Windows 10/11, 8
 
 ## Quick Start
 
-1. **Run PowerShell as Administrator**
+1. **Run PowerShell as Administrator** (the toolkit self-elevates if you forget)
 2. Execute `.\isoToolkit.ps1`
-3. Select **Source** (menu option 1) → pick your Windows ISO
-4. Choose the edition index to work on
-5. Use the menus to integrate drivers, remove bloat, customize visuals
-6. **Save changes** (menu option 5) → **Build ISO** (menu option 6)
+3. Select **Source** (menu option 1) → pick your Windows ISO → choose the edition index. The WIM mounts automatically.
+4. Use the menus to integrate drivers, remove bloat, customize visuals
+5. **Build ISO** (menu option 5) → it commits your changes and creates the bootable ISO in one step
+
+> The toolkit auto-backs up your original ISO to `ISOBackup\` before any changes, and cleans up its work directory on exit. When you're done, run **`cleanup.bat`** to clear logs, leftover mounts, backups, and work folders.
 
 ---
 
@@ -34,15 +35,16 @@ For XP customization, use **nLite** alongside this toolkit for extraction and IS
 ## Main Menu
 
 ```
-1. Source — Load ISO, auto-backup, extract, mount WIM
-2. Integrate — Add updates, drivers, .NET, registry, start layout, features
-3. Remove — Uninstall AppX packages (interactive or from list)   [Win 8+]
-4. Customize — Visuals, wallpaper, OEM, look swap, autounattend
-5. Save changes & unmount — Commit and unmount the WIM
-6. Build ISO — Create bootable ISO with oscdimg
-7. Tools — WIM manager, USB, health check & repair
-8. Exit
+1. Source     — Load ISO, auto-backup, extract, mount WIM
+2. Integrate  — Add updates, drivers, .NET, registry, start layout, features
+3. Remove     — Uninstall AppX / component packages (interactive or from list)
+4. Customize  — Visuals, wallpaper, OEM, look swap, tweaks, themed edition, browser, autounattend
+5. Build ISO  — Commit changes (auto-save) + create bootable ISO with oscdimg
+6. Tools      — WIM manager, USB, health check & repair, donor recovery
+7. Exit       — Warns if an image is still mounted with unsaved changes
 ```
+
+> There is no separate "Save" menu item — **Build ISO (option 5)** commits the mounted image first, then packages it. If you exit with an image still mounted, the toolkit warns you that unsaved changes will be discarded.
 
 ---
 
@@ -85,6 +87,15 @@ For XP customization, use **nLite** alongside this toolkit for extraction and IS
 | 9 | Custom files merge | Puts everything from a `Custom` folder next to the script into the mounted image |
 | 10 | Create autounattend.xml | Generate unattended answer file with local account |
 | 11 | Import browser data | Copies cookies, saved logins, bookmarks, history, and autofill from host browser into ISO's Default user profile. Supports Chrome, Edge, Brave, Firefox, Opera, Vivaldi. Chromium passwords may not transfer (DPAPI-encrypted). |
+| 12 | System Tweaks | Apply privacy, performance, and UI registry tweaks to the offline image |
+| 13 | Services Configuration | Set startup types for services (e.g. disable telemetry-related services) |
+| 14 | Scheduled Tasks | Disable telemetry / data-collection scheduled tasks |
+| 15 | Post-Setup Scripts | Add a script to run after install (via `SetupComplete.cmd` / `RunOnce`) |
+| 16 | Visual Transformation | Apply a bundled theme-pack preset (XP/Vista/Win7 styles) |
+| 17 | **Themed Edition Builder** | "Make Windows look like another version" the reliable way: loose assets (wallpaper/lockscreen/cursors/sounds/fonts) applied offline now, and a target-compatible theme + theming tools (SecureUxTheme, OpenShell, …) applied at **first boot** — no boot-breaking DLL swaps |
+| 18 | **Add browser** | Bundle a browser **installer** into the image and install it silently at first boot via `SetupComplete.cmd`. Use the **full offline** installer (e.g. `Firefox Setup x.x.x.exe`, ~60 MB), not the small online stub. Install progress is logged to `C:\ProgramData\Browsers\install.log` on the installed PC |
+
+> **Online stub vs. offline installer:** a file like `Firefox Installer.exe` (~500 KB) is an *online stub* that downloads the browser at runtime. It will install **nothing** at first boot because that stage runs as `SYSTEM` before networking is ready. Always bundle the full offline installer. Option 18 warns you if you pick a suspiciously small `.exe`.
 
 ---
 
@@ -109,7 +120,7 @@ For XP customization, use **nLite** alongside this toolkit for extraction and IS
 ## Key Features
 
 - **Multi-version support** — Windows 10/11, 8/8.1, 7, Vista, XP/2003. Detected automatically on source load
-- **Auto-backup** — Original ISO copied to `ISOBackup\original_backup.iso` before any modifications
+- **Auto-backup** — Original ISO copied to `ISOBackup\backup_<timestamp>.iso` before any modifications
 - **ESD handling** — Look swapper and source loading auto-convert ESD to WIM
 - **Browse dialogs** — All file/folder selections use native Windows file pickers, no manual path typing
 - **Press S to skip** during long operations
@@ -150,8 +161,10 @@ The look swapper handles both `.wim` and `.esd` donor ISOs and gracefully skips 
 - The status bar shows detected Windows version after source load
 - Mount happens automatically when you load a WIM-based source
 - You can Integrate → Remove → Customize in any order
-- Save before building, or build will auto-save
+- Build ISO (option 5) saves/commits your changes automatically — there's no separate Save step
 - Check `ErrorLogs\` if anything goes wrong
 - The `Custom` folder next to the script lets you drop in any files to merge into the image
 - For XP ISOs, the toolkit acts as an extractor/rebuilder — pair it with nLite for actual modifications
 - When swapping looks between different Windows versions, skip DLL patching to avoid boot failures
+- **Verify changes by installing, not by mounting the ISO.** Most modifications (browser, wallpaper, tweaks, first-boot scripts) live *inside* `sources\install.wim`, not in the visible ISO file tree — they only appear after Windows is actually installed (or if you mount `install.wim` with DISM). Test in a VM.
+- **Run `cleanup.bat` when you're done** — it discards leftover mounts, unloads orphaned registry hives, and deletes logs, backups, work folders, and the oscdimg cache, leaving the repo clean.

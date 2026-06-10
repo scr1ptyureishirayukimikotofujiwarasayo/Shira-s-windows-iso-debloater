@@ -9,13 +9,15 @@ A step-by-step walkthrough for every feature. If you're new, start with [Quick S
 ```
 1. Run PowerShell as Administrator
 2. .\isoToolkit.ps1
-3. Select "1. Source" -> pick your Windows ISO -> choose an edition
+3. Select "1. Source" -> pick your Windows ISO -> choose an edition (mounts automatically)
 4. Make changes (Integrate / Remove / Customize)
-5. "5. Save changes & unmount"
-6. "6. Build ISO" -> name it -> done
+5. "5. Build ISO" -> name it -> done
+   (Build commits/unmounts the image for you first - there is no separate Save step)
 ```
 
-The toolkit auto-backs up your original ISO to `ISOBackup\original_backup.iso`. You can always revert.
+The toolkit auto-backs up your original ISO to `ISOBackup\backup_<timestamp>.iso`. You can always revert.
+
+> **Important:** verify your changes by **installing the ISO in a VM**, not by mounting the `.iso` file. Almost everything the toolkit changes lives *inside* `sources\install.wim` and only appears after Windows is installed.
 
 ---
 
@@ -39,23 +41,20 @@ The toolkit auto-backs up your original ISO to `ISOBackup\original_backup.iso`. 
        │                 │                   │
        └─────────────────┼───────────────────┘
                          ▼
-                ┌─────────────────┐
-                │ 5. SAVE CHANGES │  Commit to WIM + unmount
-                └────────┬────────┘
-                         ▼
-                ┌─────────────────┐
-                │  6. BUILD ISO   │  Create bootable .iso
-                └─────────────────┘
+                ┌─────────────────────────────┐
+                │       5. BUILD ISO          │  Commits to WIM + unmounts,
+                │  (auto-saves, then packages)│  then creates the bootable .iso
+                └─────────────────────────────┘
 
-  At any point: 7. Tools -> WIM operations, health check, repair, WinRE recovery
+  At any point: 6. Tools -> WIM operations, health check, repair, WinRE recovery
 ```
 
 **Key rules:**
-- **Source must be loaded first** (option 1) before anything else
+- **Source must be loaded first** (option 1) before anything else; it mounts the WIM automatically
 - **Integrate / Remove / Customize** can be done in any order
-- **Save** writes changes and unmounts the WIM
-- **Build** creates the final ISO (auto-saves if not already done)
-- **Tools** works on loaded WIM files or the mounted image depending on the tool
+- **Build ISO (option 5)** commits your changes to the WIM, unmounts, and packages the ISO — all in one step. There is no separate Save menu item.
+- **Tools (option 6)** works on loaded WIM files or the mounted image depending on the tool
+- **Exit (option 7)** warns you if an image is still mounted with unsaved changes
 
 ---
 
@@ -68,8 +67,7 @@ The toolkit auto-backs up your original ISO to `ISOBackup\original_backup.iso`. 
 2. Remove -> "2. Remove with preset list" -> point to a .txt file of package names
 3. Customize -> "1. Desktop wallpaper" -> pick your .jpg
 4. Customize -> "6. OEM branding" -> pick logo + enter org name
-5. Save changes & unmount
-6. Build ISO -> name it "Win11Custom" -> done
+5. Build ISO -> name it "Win11Custom" -> done   (commits + packages in one step)
 ```
 
 ### Scenario B: Integrate Drivers Into an ISO
@@ -79,8 +77,7 @@ The toolkit auto-backs up your original ISO to `ISOBackup\original_backup.iso`. 
 2. Integrate -> "2. Device Drivers" -> browse folder with .inf drivers
    OR
    Integrate -> "3. Export current system drivers" -> auto-exports from your PC
-3. Save changes & unmount
-4. Build ISO
+3. Build ISO   (auto-saves the mounted image, then packages it)
 ```
 
 ### Scenario C: Repair a Corrupted/Stripped ISO Using a Donor
@@ -90,8 +87,7 @@ The toolkit auto-backs up your original ISO to `ISOBackup\original_backup.iso`. 
 2. Tools -> "9. Repair with donor ISO" -> browse clean donor ISO
    This runs DISM RestoreHealth using the donor as a repair source
 3. Tools -> "8. Health check & repair" -> verify it's fixed
-4. Save changes & unmount
-5. Build ISO
+4. Build ISO   (auto-saves the mounted image, then packages it)
 ```
 
 ### Scenario D: Restore Removed Features (e.g. .NET, WSL, Printing)
@@ -104,8 +100,7 @@ The toolkit auto-backs up your original ISO to `ISOBackup\original_backup.iso`. 
      - Spacebar to toggle
      - Enter to confirm
    Pick the ones you want back.
-3. Save changes & unmount
-4. Build ISO
+3. Build ISO   (auto-saves the mounted image, then packages it)
 ```
 
 ### Scenario E: Recover WinRE After Aggressive Debloating
@@ -115,8 +110,7 @@ The toolkit auto-backs up your original ISO to `ISOBackup\original_backup.iso`. 
 2. Tools -> "11. Recover WinRE from donor ISO" -> browse donor ISO
    (Must be same Windows version/edition)
    This copies Winre.wim, ReAgent.xml, and re-enables registry keys.
-3. Save changes & unmount
-4. Build ISO
+3. Build ISO   (auto-saves the mounted image, then packages it)
 ```
 
 ### Scenario F: Import Browser Data Into the ISO
@@ -127,9 +121,10 @@ The toolkit auto-backs up your original ISO to `ISOBackup\original_backup.iso`. 
    Detects installed browsers (Chrome, Edge, Brave, Firefox, Opera, Vivaldi)
    Select which browser -> cookies, bookmarks, logins, history copied into ISO
    New users will find their browser data pre-loaded after install
-3. Save changes & unmount
-4. Build ISO
+3. Build ISO   (auto-saves the mounted image, then packages it)
 ```
+
+> Want the browser **installed** (not just its data)? Use Customize option 18 "Add browser" with a full offline installer — see Scenario H below.
 
 ### Scenario G: Swap Visuals From One ISO to Another
 
@@ -138,16 +133,33 @@ The toolkit auto-backs up your original ISO to `ISOBackup\original_backup.iso`. 
 2. Customize -> "7. Look swapper" -> browse donor ISO
    Copies wallpapers, themes, cursors, sounds, user pics from donor
    Optional: DLL patching (icons, login visuals) — ONLY if same Windows version
-3. Save changes & unmount
-4. Build ISO
+3. Build ISO   (auto-saves the mounted image, then packages it)
 ```
+
+### Scenario H: Bundle a Browser So It's Installed on First Boot
+
+```
+1. Download the FULL OFFLINE browser installer first:
+   - Firefox: https://www.mozilla.org/firefox/all/ -> "Firefox Setup x.x.x.exe" (~60 MB)
+   - Chrome:  the "Standalone" / offline installer (ChromeStandaloneSetup64.exe)
+   NOT the small "Firefox Installer.exe" / online stub (~500 KB) - it installs nothing.
+2. Source -> load your ISO -> pick edition
+3. Customize -> "18. Add browser" -> select the offline installer
+   -> accept the suggested silent switches (Firefox: /S, MSI: /qn /norestart)
+4. Build ISO   (auto-saves the mounted image, then packages it)
+5. Install in a VM and finish first boot. The browser installs silently via
+   SetupComplete.cmd. Check C:\ProgramData\Browsers\install.log on the PC if it
+   doesn't appear (it records the exit code).
+```
+
+> **Why offline?** `SetupComplete.cmd` runs as `SYSTEM` before the first logon, often before networking is up. An online stub has nothing to download at that point, so it silently installs nothing. The full offline installer is self-contained and works headless. Option 18 warns you if you pick a tiny `.exe`.
 
 ---
 
 ## All Menus Reference
 
 ### Source (Option 1)
-Loads the ISO, extracts it, detects Windows version, and mounts the WIM for editing. Also creates a backup at `ISOBackup\original_backup.iso`. If a WIM was previously saved/unmounted, selecting Source again will remount it.
+Loads the ISO, extracts it, detects Windows version, and mounts the WIM for editing. Also creates a backup at `ISOBackup\backup_<timestamp>.iso`. If a WIM was previously saved/unmounted, selecting Source again will remount it.
 
 **What happens:**
 1. You pick an ISO file
@@ -193,19 +205,25 @@ Loads the ISO, extracts it, detects Windows version, and mounts the WIM for edit
 | 9 | Custom files merge | Drop anything into a `Custom` folder next to the script — everything gets copied into the image root |
 | 10 | Create autounattend.xml | Generates an unattended answer file with a local admin account and OOBE settings |
 | 11 | **Import browser data** | Copies cookies, saved logins, bookmarks, history, autofill data from your host browser into the ISO's Default user profile |
+| 12 | System Tweaks | Applies privacy/performance/UI registry tweaks to the offline image |
+| 13 | Services Configuration | Sets service startup types (e.g. disable telemetry services) |
+| 14 | Scheduled Tasks | Disables telemetry / data-collection scheduled tasks |
+| 15 | Post-Setup Scripts | Adds a script that runs after install (`SetupComplete.cmd` / `RunOnce`) |
+| 16 | Visual Transformation | Applies a bundled theme-pack preset (XP / Vista / Win7 styles) |
+| 17 | **Themed Edition Builder** | Cross-version theming done safely: loose assets applied offline now; theme + theming tools (SecureUxTheme, OpenShell) applied at first boot. No DLL swaps. |
+| 18 | **Add browser** | Bundles a browser installer and installs it silently at first boot. Use the **full offline** installer, not the online stub. Logs to `C:\ProgramData\Browsers\install.log`. See Scenario H. |
 
-### Save (Option 5)
-Commits all changes to the WIM and unmounts. Must be done before building. If you skip this and go straight to Build, it auto-saves first.
+### Build ISO (Option 5)
+Commits the mounted image to the WIM, unmounts it, then creates the final bootable ISO using `oscdimg.exe` — all in one step (there is no separate Save menu item). You'll be asked for an output filename (no extension); the ISO is saved next to the script unless you passed an output path. If `oscdimg.exe` isn't found, it auto-downloads from Microsoft's ADK.
 
-**If save fails:** A mounted image is left behind. Run this to clean up:
+**If a build/save ever fails and leaves a mounted image behind,** clean it up with:
 ```
 dism /unmount-image /mountdir:"C:\ISOToolkit\mount" /discard
+dism /cleanup-mountpoints
 ```
+(or just run `cleanup.bat`, which does this for you).
 
-### Build (Option 6)
-Creates the final bootable ISO using oscdimg.exe. You'll be asked for an output filename (no extension). The ISO is saved next to the script. If oscdimg.exe isn't found, it auto-downloads from Microsoft's ADK.
-
-### Tools (Option 7)
+### Tools (Option 6)
 
 | # | Feature | Use case |
 |---|---------|----------|
@@ -228,7 +246,9 @@ Creates the final bootable ISO using oscdimg.exe. You'll be asked for an output 
 | Mistake | What happens | Fix |
 |---------|-------------|-----|
 | Trying to customize before loading source | Menus say "Mount an image first" | Always start with option 1 (Source) |
-| Saving before building on non-WIM ISO (XP) | Tool says "Nothing to save" | Non-WIM ISOs don't use DISM — just build directly |
+| Checking for changes by mounting the output `.iso` | Browser/wallpaper/tweaks appear "missing" | Those live inside `install.wim`. Verify by installing in a VM, or mount `install.wim` with DISM |
+| Bundling an online "stub" browser installer (option 18) | Nothing installs at first boot | Use the full **offline** installer; the stub needs internet during a SYSTEM-context stage |
+| Building a non-WIM ISO (XP) | "Nothing to save" is normal | Non-WIM ISOs don't use DISM — Build just repackages directly |
 | Disabling a feature with /Remove | Feature files deleted permanently | Use Tools -> Restore features from donor ISO to get them back |
 | DLL patching between different Windows versions | System won't boot | Only patch DLLs if donor and target are the same major version. Otherwise skip DLL patching in the look swapper. |
 | Forgetting to unmount the donor ISO | "Drive already in use" errors | The toolkit auto-cleans donor mounts. If stuck, check Disk Management for leftover mounted ISOs. |
@@ -252,39 +272,53 @@ Creates the final bootable ISO using oscdimg.exe. You'll be asked for an output 
 
 ## Work Directory & Cleanup
 
-The toolkit uses `C:\ISOToolkit\` as its work directory. This folder can grow to 15-30 GB depending on the ISO size. To clean up:
+The toolkit uses a `Work\` folder next to the script if present, otherwise `C:\ISOToolkit\`, as its work directory. This can grow to 15-30 GB depending on the ISO size. The toolkit auto-removes its work directory on normal exit (tracked via a `.toolkit_marker` file), and discards any still-mounted image first.
+
+For a full reset — useful before committing to git or after a crash — run **`cleanup.bat`** (in this folder). It self-elevates and:
+
+- discards any leftover DISM/WIM mounts and runs `dism /cleanup-mountpoints`
+- unloads orphaned offline registry hives (`zT_*`, `zWR_*`)
+- deletes `toolkit_log.txt`, `ErrorLogs\`, `ISOBackup\`, `Work\`, `C:\ISOToolkit\`, and the downloaded `Oscdimg\` cache
+- optionally removes built output ISOs in this folder (it asks first)
 
 ```
-# After you're done with all toolkit work:
-Run Cleanup.bat from the project root folder
+# Full reset:
+cleanup.bat
 
-# Or manually:
+# Or manually, just the work dir / a stuck mount:
+dism /unmount-image /mountdir:"C:\ISOToolkit\mount" /discard
+dism /cleanup-mountpoints
 rd /s /q C:\ISOToolkit
-rd /s /q C:\WIDTemp
 ```
 
-The tool auto-creates a `.toolkit_marker` file to track its own temp directories — on exit, it asks whether to clean up.
+Manually placed **source** ISOs are never removed.
 
 ---
 
 ## Quick Reference Cheat Sheet
+
+(Main menu: 1 Source, 2 Integrate, 3 Remove, 4 Customize, 5 Build ISO, 6 Tools, 7 Exit.
+ Build (5) auto-saves; there is no separate Save step.)
 
 ```
 # Load ISO and jump straight to debloating
 1 -> pick ISO -> pick edition -> 3 -> 1 -> Spacebar to select -> Enter
 
 # Add your PC's drivers to an ISO
-1 -> pick ISO -> pick edition -> 2 -> 3 -> 5 -> 6 -> name -> done
+1 -> pick ISO -> pick edition -> 2 -> 3 -> back -> 5 -> name -> done
 
 # Brand an ISO with your company logo
-1 -> pick ISO -> pick edition -> 4 -> 6 -> pick logo -> type name -> 5 -> 6
+1 -> pick ISO -> pick edition -> 4 -> 6 -> pick logo -> type name -> back -> 5
 
-# Make a Windows 11 ISO look like Windows 10
-1 -> pick Win11 ISO -> pick edition -> 4 -> 7 -> pick Win10 donor ISO -> skip DLLs -> 5 -> 6
+# Make a Windows 11 ISO look like Windows 10 (first-boot themed edition)
+1 -> pick Win11 ISO -> pick edition -> 4 -> 17 -> pick/point to theme pack -> back -> 5
+
+# Bundle a browser to install on first boot
+1 -> pick ISO -> pick edition -> 4 -> 18 -> pick OFFLINE installer -> /S -> back -> 5
 
 # Restore WSL2 and .NET 3.5 to a stripped Micro ISO
-1 -> pick stripped ISO -> pick edition -> 7 -> 10 -> pick donor ISO -> toggle features -> Enter -> 5 -> 6
+1 -> pick stripped ISO -> pick edition -> 6 -> 10 -> pick donor ISO -> toggle features -> Enter -> 5
 
 # Create a fully unattended install ISO
-1 -> pick ISO -> pick edition -> 4 -> 10 -> enter account name -> 5 -> 6
+1 -> pick ISO -> pick edition -> 4 -> 10 -> enter account name -> back -> 5
 ```
